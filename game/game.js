@@ -229,7 +229,7 @@
     mk_destroyseed: function(x, y, dir) {
       var s;
       s = new Phaser.Sprite(this.game, (x + 0.5) * TILE_SIZE, (y + 0.5) * TILE_SIZE, 'destroyseed');
-      s.anchor.setTo(.5, 0.6);
+      s.anchor.setTo(.5, 0.5);
       s.angle = _angle(dir);
       s.animations.add('play');
       s.animations.play('play', 10, true);
@@ -386,7 +386,7 @@
       return _results;
     },
     upd_surf: function() {
-      var at, b, dir, dx, dy, found, foundtile, negtiles, outerborder, s, t, tiles, tt, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _m, _ref, _ref1;
+      var at, dir, dx, dy, found, foundtile, negtiles, outerborder, s, t, tiles, tt, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1;
       tiles = [[this.s.player.x, this.s.player.y]];
       at = 0;
       while (1) {
@@ -417,6 +417,7 @@
         }
         at += 1;
       }
+      this.surf.removeAll();
       negtiles = [[0, 0]];
       outerborder = [];
       at = 0;
@@ -447,18 +448,15 @@
             }
           }
           if (this.tilemap.getTile(t[0] + dx, t[1] + dy)) {
-            foundtile = true;
+            s = this.surf.add(new Phaser.Sprite(this.game, (t[0] + 0.5) * TILE_SIZE, (t[1] + 0.5) * TILE_SIZE, 'surface'));
+            s.anchor.setTo(0.5, 0.5);
+            s.angle = _angle(dir);
           }
         }
         if (foundtile) {
           outerborder.push([t[0], t[1]]);
         }
         at += 1;
-      }
-      this.surf.removeAll();
-      for (_m = 0, _len4 = outerborder.length; _m < _len4; _m++) {
-        b = outerborder[_m];
-        s = this.surf.add(new Phaser.Sprite(this.game, (b[0] + 0.5) * TILE_SIZE, (b[1] + 0.5) * TILE_SIZE, 'growseed'));
       }
       return console.log(outerborder);
     },
@@ -661,6 +659,7 @@
   var MainMenu;
 
   MainMenu = function(game) {
+    this.game = game;
     this.music = null;
     return this.playButton = null;
   };
@@ -669,6 +668,10 @@
 
   MainMenu.prototype = {
     create: function() {
+      if (!this.game.music) {
+        this.game.music = this.add.audio('main');
+        this.game.music.play();
+      }
       this.bg = this.add.sprite(0, 0, 'menusharp');
       return setTimeout(((function(_this) {
         return function() {
@@ -707,9 +710,11 @@
       this.load.image('backpixel', 'assets/img/backpixel.png');
       this.load.image('tileset', 'assets/img/tileset.png');
       this.load.image('player', 'assets/img/player.png');
-      this.load.spritesheet('growseed', 'assets/img/growseed.png', 24, 48, 4, 0, 0);
-      this.load.spritesheet('destroyseed', 'assets/img/destroyseed.png', 24, 48, 4, 0, 0);
+      this.load.image('surface', 'assets/img/surface.png');
+      this.load.spritesheet('growseed', 'assets/img/growseed.png', 30, 60, 4, 0, 0);
+      this.load.spritesheet('destroyseed', 'assets/img/destroyseed.png', 30, 30, 4, 0, 0);
       this.load.image('playButton', 'assets/img/button_sprite_sheet.png', 193, 71);
+      this.load.audio('main', ['assets/audio/main.mp3']);
       return this.load.bitmapFont('carrier_command', 'assets/fonts/carrier_command.png', 'assets/fonts/carrier_command.xml');
     },
     create: function() {},

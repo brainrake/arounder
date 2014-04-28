@@ -196,7 +196,7 @@
     mk_destroyseed: function(x, y, dir) {
       var s;
       s = new Phaser.Sprite(this.game, (x + 0.5) * TILE_SIZE, (y + 0.5) * TILE_SIZE, 'destroyseed');
-      s.anchor.setTo(.5, 0.6);
+      s.anchor.setTo(.5, 0.5);
       s.angle = _angle(dir);
       s.animations.add('play');
       s.animations.play('play', 10, true);
@@ -353,7 +353,7 @@
       return _results;
     },
     upd_surf: function() {
-      var at, b, dir, dx, dy, found, foundtile, negtiles, outerborder, s, t, tiles, tt, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _m, _ref, _ref1;
+      var at, dir, dx, dy, found, foundtile, negtiles, outerborder, s, t, tiles, tt, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1;
       tiles = [[this.s.player.x, this.s.player.y]];
       at = 0;
       while (1) {
@@ -384,6 +384,7 @@
         }
         at += 1;
       }
+      this.surf.removeAll();
       negtiles = [[0, 0]];
       outerborder = [];
       at = 0;
@@ -414,18 +415,15 @@
             }
           }
           if (this.tilemap.getTile(t[0] + dx, t[1] + dy)) {
-            foundtile = true;
+            s = this.surf.add(new Phaser.Sprite(this.game, (t[0] + 0.5) * TILE_SIZE, (t[1] + 0.5) * TILE_SIZE, 'surface'));
+            s.anchor.setTo(0.5, 0.5);
+            s.angle = _angle(dir);
           }
         }
         if (foundtile) {
           outerborder.push([t[0], t[1]]);
         }
         at += 1;
-      }
-      this.surf.removeAll();
-      for (_m = 0, _len4 = outerborder.length; _m < _len4; _m++) {
-        b = outerborder[_m];
-        s = this.surf.add(new Phaser.Sprite(this.game, (b[0] + 0.5) * TILE_SIZE, (b[1] + 0.5) * TILE_SIZE, 'growseed'));
       }
       return console.log(outerborder);
     },

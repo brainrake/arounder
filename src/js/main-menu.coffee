@@ -1,4 +1,5 @@
 MainMenu = (game) ->
+  this.game = game
   this.music = null;
   this.playButton = null;
 
@@ -7,8 +8,9 @@ module.exports = MainMenu;
 
 MainMenu.prototype =
   create: () ->
-    #this.music = this.add.audio('titleMusic');
-    #this.music.play();
+    if not this.game.music
+      this.game.music = this.add.audio('main');
+      this.game.music.play();
 
     @bg = this.add.sprite(0, 0, 'menusharp');
 

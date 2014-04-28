@@ -30,11 +30,12 @@ Preloader.prototype =
     @load.image('backpixel', 'assets/img/backpixel.png');
     @load.image('tileset', 'assets/img/tileset.png');
     @load.image('player', 'assets/img/player.png');
-    @load.spritesheet('growseed', 'assets/img/growseed.png', 24, 48, 4, 0, 0)
-    @load.spritesheet('destroyseed', 'assets/img/destroyseed.png', 24, 48, 4, 0, 0)
+    @load.image('surface', 'assets/img/surface.png');
+    @load.spritesheet('growseed', 'assets/img/growseed.png', 30, 60, 4, 0, 0)
+    @load.spritesheet('destroyseed', 'assets/img/destroyseed.png', 30, 30, 4, 0, 0)
 
     this.load.image('playButton', 'assets/img/button_sprite_sheet.png', 193, 71);
-    #this.load.audio('titleMusic', ['assets/audio/main_menu.mp3']);
+    this.load.audio('main', ['assets/audio/main.mp3']);
     this.load.bitmapFont('carrier_command', 'assets/fonts/carrier_command.png', 'assets/fonts/carrier_command.xml');
   
 

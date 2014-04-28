@@ -20,9 +20,11 @@
       this.load.image('backpixel', 'assets/img/backpixel.png');
       this.load.image('tileset', 'assets/img/tileset.png');
       this.load.image('player', 'assets/img/player.png');
-      this.load.spritesheet('growseed', 'assets/img/growseed.png', 24, 48, 4, 0, 0);
-      this.load.spritesheet('destroyseed', 'assets/img/destroyseed.png', 24, 48, 4, 0, 0);
+      this.load.image('surface', 'assets/img/surface.png');
+      this.load.spritesheet('growseed', 'assets/img/growseed.png', 30, 60, 4, 0, 0);
+      this.load.spritesheet('destroyseed', 'assets/img/destroyseed.png', 30, 30, 4, 0, 0);
       this.load.image('playButton', 'assets/img/button_sprite_sheet.png', 193, 71);
+      this.load.audio('main', ['assets/audio/main.mp3']);
       return this.load.bitmapFont('carrier_command', 'assets/fonts/carrier_command.png', 'assets/fonts/carrier_command.xml');
     },
     create: function() {},

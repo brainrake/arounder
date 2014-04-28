@@ -124,7 +124,7 @@ Game.prototype =
 
   mk_destroyseed: (x, y, dir) ->
     s = new Phaser.Sprite(@game, (x + 0.5) * TILE_SIZE, (y + 0.5) * TILE_SIZE, 'destroyseed')
-    s.anchor.setTo .5, 0.6
+    s.anchor.setTo .5, 0.5
     s.angle = _angle dir
     s.animations.add 'play'
     s.animations.play 'play', 10, true
@@ -239,6 +239,8 @@ Game.prototype =
             tiles.push [t[0] + dx, t[1] + dy]
       at += 1
 
+
+    @surf.removeAll()
     negtiles = [[0, 0]]
     outerborder = []
     at = 0
@@ -261,15 +263,13 @@ Game.prototype =
           if not found
             negtiles.push [t[0] + dx, t[1] + dy]
         if @tilemap.getTile t[0] + dx, t[1] + dy
-          foundtile = yes
+          s = @surf.add new Phaser.Sprite(@game, (t[0] + 0.5) * TILE_SIZE, (t[1] + 0.5) * TILE_SIZE, 'surface')
+          s.anchor.setTo 0.5, 0.5
+          s.angle = _angle dir
       if foundtile
         outerborder.push [t[0], t[1]]
       at += 1
 
-
-    @surf.removeAll()
-    for b in outerborder
-      s = @surf.add new Phaser.Sprite(@game, (b[0] + 0.5) * TILE_SIZE, (b[1] + 0.5) * TILE_SIZE, 'growseed')
     console.log outerborder
 
     #outerborder
