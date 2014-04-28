@@ -34,13 +34,14 @@ Preloader.prototype =
     @load.image('tileset', 'assets/img/tileset.png');
     @load.image('player', 'assets/img/player.png');
     @load.image('surface', 'assets/img/surface.png');
+    @load.image('surfacew', 'assets/img/surfacew.png');
     @load.spritesheet('tilesetgrow', 'assets/img/tilesetgrow.png', 30, 30, 20, 0, 0);
     @load.spritesheet('growseed', 'assets/img/growseed.png', 30, 60, 4, 0, 0)
     @load.spritesheet('destroyseed', 'assets/img/destroyseed.png', 30, 30, 4, 0, 0)
     @load.spritesheet('numbers', 'assets/img/numbers.png', 60, 90, 10, 0, 0)
     #@load.image('playButton', 'assets/img/button_sprite_sheet.png', 193, 71);
     @load.audio('main', ['assets/audio/main.mp3']);
-    @load.audio('a_destroy', [ 'assets/audio/destroy.mp3'])
+    @load.audio('a_destroy', [ 'assets/audio/noise.mp3'])
     @load.audio('a_growseed', [ 'assets/audio/growseed.mp3'])
     @load.audio('a_push', [ 'assets/audio/push.mp3'])
 

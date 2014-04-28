@@ -31,7 +31,7 @@
 
 },{}],2:[function(require,module,exports){
 (function() {
-  var BORDER_BOTTOM, BORDER_LEFT, BORDER_RIGHT, BORDER_TOP, DIRS, F_PENTOMINO, Game, MAP_CENTER_X, MAP_CENTER_Y, MAP_HEIGHT, MAP_WIDTH, TILE_SIZE, __, _angle, _angle_to_dir, _dirs_to_tile, _dxdy, _reverse;
+  var BORDER_BOTTOM, BORDER_LEFT, BORDER_RIGHT, BORDER_TOP, DIRS, F_PENTOMINO, Game, MAP_CENTER_X, MAP_CENTER_Y, MAP_HEIGHT, MAP_WIDTH, TILE_SIZE, __, _angle, _angle_to_dir, _dirs_to_tile, _dxdy, _pyt, _reverse;
 
   __ = function() {
     console.log.apply(console, arguments);
@@ -55,13 +55,13 @@
 
   MAP_CENTER_Y = (MAP_HEIGHT - 3) / 2;
 
-  BORDER_TOP = 5;
+  BORDER_TOP = 3;
 
-  BORDER_RIGHT = 20;
+  BORDER_RIGHT = 22;
 
-  BORDER_BOTTOM = 20;
+  BORDER_BOTTOM = 22;
 
-  BORDER_LEFT = 5;
+  BORDER_LEFT = 3;
 
   DIRS = ['up', 'right', 'down', 'left'];
 
@@ -126,6 +126,10 @@
 
   F_PENTOMINO = [[0, -1], [1, -1], [-1, 0], [0, 0], [0, 1]];
 
+  _pyt = function(x0, y0, x1, y1) {
+    return Math.sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0));
+  };
+
   (function() {
     function _Class() {}
 
@@ -162,6 +166,10 @@
           img = _this.add.image(450, 285, res);
           img.fixedToCamera = true;
           img.anchor.setTo(.5, .5);
+          img.scale = {
+            x: .7,
+            y: .7
+          };
           img.alpha = 1;
           tween = _this.add.tween(img);
           tween.to({
@@ -175,8 +183,8 @@
         };
       })(this);
       rot('cloud', 360, 99999);
-      rot('cloud3', -360, 99999);
-      this.a_destroy = this.add.audio('a_destroy', 2);
+      rot('cloud3', -360, 119999);
+      this.a_destroy = this.add.audio('a_destroy', 0.3);
       this.a_growseed = this.add.audio('a_growseed', 2);
       this.a_push = this.add.audio('a_push', 2);
       this.tilemap = this.add.tilemap(null, TILE_SIZE, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT);
@@ -209,7 +217,8 @@
       this.player = this.add.image((x + .5) * TILE_SIZE, (y + .5) * TILE_SIZE, 'player');
       this.player.anchor.setTo(.5, .5);
       this.inv = this.add.group();
-      rot('cloud2', 360, 199999);
+      this.circ = this.add.group();
+      rot('cloud2', 360, 149999);
       return this.upd_surf();
     },
     upd_inv: function() {
@@ -220,7 +229,7 @@
       for (n = _i = 0, _len = _ref.length; _i < _len; n = ++_i) {
         i = _ref[n];
         if (i === 1) {
-          t = this.inv.add(new Phaser.Sprite(this.game, 1 * TILE_SIZE, (16 - n) * TILE_SIZE, 'tilesetgrow'));
+          t = this.inv.add(new Phaser.Sprite(this.game, 2 * TILE_SIZE, (2 + n) * TILE_SIZE, 'tilesetgrow'));
           _results.push(t.frame = _dirs_to_tile(''));
         } else {
           _results.push(void 0);
@@ -392,7 +401,7 @@
       return _results;
     },
     upd_surf: function() {
-      var at, b, dir, dx, dy, found, lc, ls, n, negtiles, outerborder, s, t, tiles, tt, _i, _in, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _m, _ref, _ref1;
+      var angle, at, b, cx, cy, d, dir, dx, dy, found, lc, ls, n, negtiles, outerborder, over, s, t, tiles, tt, x, y, _i, _in, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _m, _n, _ref, _ref1, _ref2;
       tiles = [[this.s.player.x, this.s.player.y]];
       negtiles = [[0, 0]];
       _in = function(ts, x, y) {
@@ -434,7 +443,6 @@
         at += 1;
       }
       this.surf.removeAll();
-      'outerborder = []\nat = -1\nwhile 1\n  at += 1\n  if at > 1000 \n    __ \'ntl\', negtiles.length\n    return []\n  if at >= negtiles.length then break\n  t = negtiles[at]\n\n  for dir in DIRS\n    [dx, dy] = _dxdy dir\n    #__ \'dir\', dir\n    if _in tiles, t[0]+dx, t[1]+dx\n      #__ \'intiles\'\n      outerborder.push [t[0], t[1], dir]\n\n    else\n      if (t[0] + dx >= 0) and (t[1] + dy >= 0) and (t[0] + dx < MAP_WIDTH) and (t[1] + dy < MAP_WIDTH)\n        #__ \'inmap\'\n        if not _in negtiles, t[0] + dx, t[1] + dy\n\n          negtiles.push [t[0] + dx, t[1] + dy]';
       outerborder = [];
       for (_k = 0, _len2 = tiles.length; _k < _len2; _k++) {
         t = tiles[_k];
@@ -444,7 +452,7 @@
           if (!this.tilemap.getTile(t[0] + dx, t[1] + dy)) {
             b = [t[0] + dx, t[1] + dy, _reverse(dir)];
             outerborder.push(b);
-            s = this.surf.add(new Phaser.Sprite(this.game, (b[0] + 0.5) * TILE_SIZE, (b[1] + 0.5) * TILE_SIZE, 'surface'));
+            s = this.surf.add(new Phaser.Sprite(this.game, (b[0] + 0.5) * TILE_SIZE, (b[1] + 0.5) * TILE_SIZE, 'surfacew'));
             s.anchor.setTo(0.5, 0.5);
             s.angle = _angle(b[2]);
           }
@@ -460,13 +468,40 @@
       }
       for (n = _m = 0, _len4 = ls.length; _m < _len4; n = ++_m) {
         lc = ls[n];
-        s = this.st.add(new Phaser.Sprite(this.game, 27 * TILE_SIZE, (3 * n + 2) * TILE_SIZE, 'numbers'));
+        s = this.st.add(new Phaser.Sprite(this.game, (2 * n + 24) * TILE_SIZE, 2 * TILE_SIZE, 'numbers'));
         s.frame = lc * 1;
+      }
+      over = false;
+      if (this.circ) {
+        this.circ.removeAll();
+        cx = 14;
+        cy = 8.5;
+        _ref2 = this.baselayer.getTiles(0, 0, MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE);
+        for (_n = 0, _len5 = _ref2.length; _n < _len5; _n++) {
+          tt = _ref2[_n];
+          x = tt.x;
+          y = tt.y;
+          dx = x - cx;
+          dy = y - cy;
+          d = _pyt(x, y, cx, cy);
+          if (d > 5.2) {
+            angle = Math.atan2(x - cx, y - cy);
+            s = this.surf.add(new Phaser.Sprite(this.game, (cx + .5) * TILE_SIZE, (cy + .5) * TILE_SIZE, 'surface'));
+            s.anchor.setTo(0.5, 7.5);
+            s.angle = 180 - angle * 180 / 3.1415;
+          }
+          if (d > 6.5) {
+            over = true;
+          }
+        }
+      }
+      if (over) {
+        this.gover();
       }
       return outerborder;
     },
     update: function() {
-      var dir, dx, dy, found, player, ss, tween, _i, _len, _ref, _ref1;
+      var dir, dx, dy, found, ss, tween, _i, _len, _ref, _ref1;
       if (!this.s.over) {
         found = false;
         if (!this.moving && !this.s.putdown) {
@@ -497,8 +532,6 @@
                     return _this.growseeds.remove(s);
                   } else {
                     _this.s.putdown = true;
-                    _this.s.inv.push(1);
-                    _this.upd_inv();
                     ss = _this.world.add(_this.mk_growseed(t.x, t.y, 'up'));
                     ss.angle = s.angle;
                     tween = _this.add.tween(ss.scale);
@@ -511,7 +544,7 @@
                     });
                     tween.start();
                     tween = _this.add.tween(ss);
-                    _ref1 = _dxdy(_reverse(_angle_to_dir(s.angle))), dx = _ref1[0], dy = _ref1[1];
+                    _ref1 = _dxdy(_angle_to_dir(s.angle)), dx = _ref1[0], dy = _ref1[1];
                     tween.to({
                       alpha: 0,
                       x: ss.x + 2 * dx * TILE_SIZE,
@@ -592,29 +625,36 @@
           }
         }
         if (!this.tilemap.getTile(this.s.player.x, this.s.player.y)) {
-          this.s.over = true;
-          player = this.add.image(this.player.x, this.player.y, 'player');
-          player.anchor.setTo(.5, .5);
-          player.angle = this.player.angle;
-          tween = this.add.tween(player);
-          tween.to({
-            alpha: 0
-          }, 500);
-          tween.start();
-          tween = this.add.tween(player.scale);
-          tween.to({
-            x: 0.2,
-            y: 0.2
-          }, 500);
-          tween.start();
-          this.world.remove(this.player);
-          return setTimeout(((function(_this) {
-            return function() {
-              return _this.quitGame();
-            };
-          })(this)), 2000);
+          return this.gover();
         }
       }
+    },
+    gover: function() {
+      var player, tween;
+      if (this.s.over) {
+        return;
+      }
+      this.s.over = true;
+      player = this.add.image(this.player.x, this.player.y, 'player');
+      player.anchor.setTo(.5, .5);
+      player.angle = this.player.angle;
+      tween = this.add.tween(player);
+      tween.to({
+        alpha: 0
+      }, 500);
+      tween.start();
+      tween = this.add.tween(player.scale);
+      tween.to({
+        x: 0.2,
+        y: 0.2
+      }, 500);
+      tween.start();
+      this.world.remove(this.player);
+      return setTimeout(((function(_this) {
+        return function() {
+          return _this.quitGame();
+        };
+      })(this)), 4000);
     },
     quitGame: function(pointer) {
       return this.game.state.start('MainMenu');
@@ -705,12 +745,13 @@
       this.load.image('tileset', 'assets/img/tileset.png');
       this.load.image('player', 'assets/img/player.png');
       this.load.image('surface', 'assets/img/surface.png');
+      this.load.image('surfacew', 'assets/img/surfacew.png');
       this.load.spritesheet('tilesetgrow', 'assets/img/tilesetgrow.png', 30, 30, 20, 0, 0);
       this.load.spritesheet('growseed', 'assets/img/growseed.png', 30, 60, 4, 0, 0);
       this.load.spritesheet('destroyseed', 'assets/img/destroyseed.png', 30, 30, 4, 0, 0);
       this.load.spritesheet('numbers', 'assets/img/numbers.png', 60, 90, 10, 0, 0);
       this.load.audio('main', ['assets/audio/main.mp3']);
-      this.load.audio('a_destroy', ['assets/audio/destroy.mp3']);
+      this.load.audio('a_destroy', ['assets/audio/noise.mp3']);
       this.load.audio('a_growseed', ['assets/audio/growseed.mp3']);
       this.load.audio('a_push', ['assets/audio/push.mp3']);
       return this.load.bitmapFont('carrier_command', 'assets/fonts/carrier_command.png', 'assets/fonts/carrier_command.xml');

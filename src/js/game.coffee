@@ -33,10 +33,10 @@ MAP_HEIGHT = 21
 MAP_WIDTH = 30
 MAP_CENTER_X = (MAP_WIDTH - 2) / 2
 MAP_CENTER_Y = (MAP_HEIGHT - 3) / 2
-BORDER_TOP = 5
-BORDER_RIGHT = 20
-BORDER_BOTTOM = 20
-BORDER_LEFT = 5
+BORDER_TOP = 3
+BORDER_RIGHT = 22
+BORDER_BOTTOM = 22
+BORDER_LEFT = 3
 
 DIRS = ['up', 'right', 'down', 'left']
 
@@ -53,6 +53,8 @@ _angle_to_dir = (angle) -> {'0': 'up', '90': 'right', '180': 'down', '-180': 'do
 
 F_PENTOMINO = [[0, -1], [1, -1], [-1, 0], [0, 0], [0, 1]]
 
+_pyt = (x0, y0, x1, y1) ->
+  Math.sqrt (x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0)
 
 class 
 
@@ -78,6 +80,7 @@ Game.prototype =
       img = @add.image 450, 285, res
       img.fixedToCamera = yes
       img.anchor.setTo .5, .5
+      img.scale = {x: .7, y: .7}
       img.alpha = 1 #0.8
       tween = @add.tween img
       tween.to (angle: angle), period
@@ -86,11 +89,11 @@ Game.prototype =
 
 
     rot 'cloud',360, 99999
-    rot 'cloud3',-360, 99999
+    rot 'cloud3',-360, 119999
     #@bg = @add.image 0, 0, 'border'
     #@bg.fixedToCamera = yes
 
-    @a_destroy = this.add.audio 'a_destroy', 2
+    @a_destroy = this.add.audio 'a_destroy', 0.3
     @a_growseed = this.add.audio 'a_growseed', 2
     @a_push = this.add.audio 'a_push', 2
 
@@ -120,7 +123,8 @@ Game.prototype =
 
     @inv = @add.group()
 
-    rot 'cloud2', 360, 199999
+    @circ = @add.group()
+    rot 'cloud2', 360, 149999
 
     @upd_surf()
 
@@ -128,7 +132,7 @@ Game.prototype =
     @inv.removeAll()
     for i, n in @s.inv
       if i ==  1
-        t = @inv.add new Phaser.Sprite @game, 1 * TILE_SIZE, (16 - n) * TILE_SIZE, 'tilesetgrow'
+        t = @inv.add new Phaser.Sprite @game, 2 * TILE_SIZE, (2 + n) * TILE_SIZE, 'tilesetgrow'
         t.frame = _dirs_to_tile ''
 
   mk_growseed: (x, y, dir) ->
@@ -268,37 +272,6 @@ Game.prototype =
     #__ tiles
     @surf.removeAll()
 
-    '''
-    outerborder = []
-    at = -1
-    while 1
-      at += 1
-      if at > 1000 
-        __ 'ntl', negtiles.length
-        return []
-      if at >= negtiles.length then break
-      t = negtiles[at]
-
-      for dir in DIRS
-        [dx, dy] = _dxdy dir
-        #__ 'dir', dir
-        if _in tiles, t[0]+dx, t[1]+dx
-          #__ 'intiles'
-          outerborder.push [t[0], t[1], dir]
-
-        else
-          if (t[0] + dx >= 0) and (t[1] + dy >= 0) and (t[0] + dx < MAP_WIDTH) and (t[1] + dy < MAP_WIDTH)
-            #__ 'inmap'
-            if not _in negtiles, t[0] + dx, t[1] + dy
-
-              negtiles.push [t[0] + dx, t[1] + dy]
-    '''
-
-    #__ 'negtiles'
-    #__ negtiles
-    #__ 'outerborder'
-    #__ outerborder
-
     outerborder = []
     for t in tiles
       for dir in DIRS
@@ -306,10 +279,9 @@ Game.prototype =
         if not @tilemap.getTile t[0] + dx, t[1] + dy
           b = [t[0] + dx, t[1] + dy, _reverse dir]
           outerborder.push(b)
-          s = @surf.add new Phaser.Sprite(@game, (b[0] + 0.5) * TILE_SIZE, (b[1] + 0.5) * TILE_SIZE, 'surface')
+          s = @surf.add new Phaser.Sprite(@game, (b[0] + 0.5) * TILE_SIZE, (b[1] + 0.5) * TILE_SIZE, 'surfacew')
           s.anchor.setTo 0.5, 0.5
           s.angle = _angle b[2]
-
 
     @st.removeAll()
     ls = '' + outerborder.length
@@ -318,8 +290,33 @@ Game.prototype =
     if ls.length == 2
       ls = '0'+ls
     for lc, n in ls
-      s = @st.add new Phaser.Sprite(@game, 27 * TILE_SIZE, (3 * n + 2) * TILE_SIZE, 'numbers')
+      s = @st.add new Phaser.Sprite(@game, (2 * n + 24) * TILE_SIZE, 2 * TILE_SIZE, 'numbers')
       s.frame = lc*1
+
+    over = no
+    if @circ
+      @circ.removeAll()
+
+      cx = 14
+      cy = 8.5
+
+      for tt in @baselayer.getTiles 0, 0, MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE 
+        x = tt.x
+        y = tt.y
+        dx = x - cx
+        dy = y - cy
+        d = _pyt x, y, cx, cy
+        if d > 5.2
+          angle = Math.atan2 x-cx, y-cy
+          #__ angle
+          s = @surf.add new Phaser.Sprite(@game, (cx + .5) * TILE_SIZE, (cy + .5) * TILE_SIZE, 'surface')
+          s.anchor.setTo 0.5, 7.5
+          s.angle = 180 - angle * 180 / 3.1415
+        if d > 6.5
+          over = yes
+    
+    if over
+      @gover()
 
     #__ outerborder.length
     outerborder
@@ -352,8 +349,6 @@ Game.prototype =
 
             else # kill growseed
               @s.putdown = yes
-              @s.inv.push 1
-              @upd_inv()
               
               ss = @world.add @mk_growseed t.x, t.y, 'up'
               ss.angle = s.angle
@@ -362,7 +357,7 @@ Game.prototype =
               tween.onComplete.add => @world.remove ss
               tween.start()
               tween = @add.tween ss
-              [dx, dy] = _dxdy _reverse _angle_to_dir s.angle
+              [dx, dy] = _dxdy _angle_to_dir s.angle
               tween.to {alpha:0, x: ss.x + 2 * dx * TILE_SIZE, y: ss.y + 2 * dy * TILE_SIZE}, 300
               tween.start()
               
@@ -406,6 +401,7 @@ Game.prototype =
       if not @in.space.isDown and @s.putdown
         @s.putdown = no
 
+      #move
       for dir in DIRS
         if @in.cursors[dir].isDown and not @s.moving
           @player.angle = _angle dir
@@ -416,19 +412,24 @@ Game.prototype =
 
       #gameover
       if not @tilemap.getTile @s.player.x, @s.player.y
-        @s.over = yes
-        #@add.text 200, 200, 'game over', color: '#ffffff'
-        player = @add.image @player.x, @player.y, 'player'
-        player.anchor.setTo .5, .5
-        player.angle = @player.angle
-        tween = @add.tween player
-        tween.to {alpha: 0}, 500
-        tween.start()
-        tween = @add.tween player.scale
-        tween.to {x:0.2, y:0.2}, 500
-        tween.start()
-        @world.remove @player
-        setTimeout (=>@quitGame()), 2000
+        @gover()
+
+
+  gover: ->
+    if @s.over then return
+    @s.over = yes
+
+    player = @add.image @player.x, @player.y, 'player'
+    player.anchor.setTo .5, .5
+    player.angle = @player.angle
+    tween = @add.tween player
+    tween.to {alpha: 0}, 500
+    tween.start()
+    tween = @add.tween player.scale
+    tween.to {x:0.2, y:0.2}, 500
+    tween.start()
+    @world.remove @player
+    setTimeout (=>@quitGame()), 4000
         
 
   quitGame: (pointer) ->

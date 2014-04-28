@@ -25,12 +25,13 @@
       this.load.image('tileset', 'assets/img/tileset.png');
       this.load.image('player', 'assets/img/player.png');
       this.load.image('surface', 'assets/img/surface.png');
+      this.load.image('surfacew', 'assets/img/surfacew.png');
       this.load.spritesheet('tilesetgrow', 'assets/img/tilesetgrow.png', 30, 30, 20, 0, 0);
       this.load.spritesheet('growseed', 'assets/img/growseed.png', 30, 60, 4, 0, 0);
       this.load.spritesheet('destroyseed', 'assets/img/destroyseed.png', 30, 30, 4, 0, 0);
       this.load.spritesheet('numbers', 'assets/img/numbers.png', 60, 90, 10, 0, 0);
       this.load.audio('main', ['assets/audio/main.mp3']);
-      this.load.audio('a_destroy', ['assets/audio/destroy.mp3']);
+      this.load.audio('a_destroy', ['assets/audio/noise.mp3']);
       this.load.audio('a_growseed', ['assets/audio/growseed.mp3']);
       this.load.audio('a_push', ['assets/audio/push.mp3']);
       return this.load.bitmapFont('carrier_command', 'assets/fonts/carrier_command.png', 'assets/fonts/carrier_command.xml');
