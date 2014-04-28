@@ -7,11 +7,10 @@
   module.exports = Boot;
 
   Boot.prototype = {
-    preload: function() {
-      return this.load.image('menusharp', 'assets/img/menusharp.png');
-    },
+    preload: function() {},
     create: function() {
       this.game.input.maxPointers = 1;
+      this.game.stage.disableVisibilityChange = true;
       if (this.game.device.desktop) {
         this.game.stage.scale.pageAlignHorizontally = true;
       } else {
@@ -177,6 +176,9 @@
       })(this);
       rot('cloud', 360, 99999);
       rot('cloud3', -360, 99999);
+      this.a_destroy = this.add.audio('a_destroy', 2);
+      this.a_growseed = this.add.audio('a_growseed', 2);
+      this.a_push = this.add.audio('a_push', 2);
       this.tilemap = this.add.tilemap(null, TILE_SIZE, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT);
       this.baselayer = this.tilemap.createBlankLayer('layer1', MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, TILE_SIZE);
       this.baselayer.fixedToCamera = false;
@@ -316,6 +318,13 @@
             if (!this.tilemap.getTile(x + dx, y + dy)) {
               gs = this.growseeds.add(this.mk_growseed(x, y, dir));
               gs.alpha = 0;
+              gs.anchor.setTo(0.5, 10);
+              tween = this.add.tween(gs.anchor);
+              tween.to({
+                x: 0.5,
+                y: 0.5
+              }, 500);
+              tween.start();
               tween = this.add.tween(gs);
               tween.to({
                 alpha: 1
@@ -351,6 +360,13 @@
             if (!this.tilemap.getTile(x + dx, y + dy)) {
               gs = this.destroyseeds.add(this.mk_destroyseed(x, y, dir));
               gs.alpha = 0;
+              gs.anchor.setTo(0.5, 10);
+              tween = this.add.tween(gs.anchor);
+              tween.to({
+                x: 0.5,
+                y: 0.5
+              }, 500);
+              tween.start();
               tween = this.add.tween(gs);
               tween.to({
                 alpha: 1
@@ -360,7 +376,8 @@
                 return function() {
                   if ((_this.destroyseeds.getIndex(gs)) > -1) {
                     _this.destroyseeds.remove(gs);
-                    return _this.clearTile(x, y);
+                    _this.clearTile(x, y);
+                    return _this.a_destroy.play();
                   }
                 };
               })(this)), 3000);
@@ -466,22 +483,16 @@
                     _this.upd_inv();
                     ss = _this.world.add(_this.mk_growseed(t.x, t.y, 'up'));
                     ss.angle = s.angle;
-                    tween = _this.add.tween(ss.scale);
-                    tween.to({
-                      x: 0.5,
-                      y: 0.5
-                    }, 1000);
-                    tween.onComplete.add(function() {
-                      return _this.world.remove(ss);
-                    });
-                    tween.start();
                     tween = _this.add.tween(ss);
                     _ref = _dxdy(_reverse(_angle_to_dir(s.angle))), dx = _ref[0], dy = _ref[1];
                     tween.to({
                       alpha: 0,
                       x: ss.x + 0.2 * dx * TILE_SIZE,
                       y: ss.y + 0.2 * dy * TILE_SIZE
-                    }, 500);
+                    }, 300);
+                    tween.onComplete.add(function() {
+                      return _this.world.remove(ss);
+                    });
                     tween.start();
                     return _this.growseeds.remove(s);
                   } else {
@@ -494,7 +505,7 @@
                     tween.to({
                       x: 0.5,
                       y: 0.5
-                    }, 1000);
+                    }, 300);
                     tween.onComplete.add(function() {
                       return _this.world.remove(ss);
                     });
@@ -505,7 +516,7 @@
                       alpha: 0,
                       x: ss.x + 2 * dx * TILE_SIZE,
                       y: ss.y + 2 * dy * TILE_SIZE
-                    }, 500);
+                    }, 300);
                     tween.start();
                     return _this.growseeds.remove(s);
                   }
@@ -530,12 +541,13 @@
                     alpha: 0,
                     x: ss.x + 2 * dx * TILE_SIZE,
                     y: ss.y + 2 * dy * TILE_SIZE
-                  }, 500);
+                  }, 300);
                   tween.onComplete.add(function() {
                     return _this.world.remove(ss);
                   });
                   tween.start();
-                  return _this.destroyseeds.remove(s);
+                  _this.destroyseeds.remove(s);
+                  return _this.a_push.play();
                 }
               }
             };
@@ -552,7 +564,7 @@
                 alpha: 0,
                 x: ss.x + 2 * dx * TILE_SIZE,
                 y: ss.y + 2 * dy * TILE_SIZE
-              }, 500);
+              }, 300);
               tween.onComplete.add((function(_this) {
                 return function() {
                   return _this.world.remove(ss);
@@ -561,6 +573,7 @@
               tween.start();
               this.s.inv.pop();
               this.upd_inv();
+              this.a_growseed.play();
             }
           }
         }
@@ -582,9 +595,9 @@
           this.s.over = true;
           player = this.add.image(this.player.x, this.player.y, 'player');
           player.anchor.setTo(.5, .5);
+          player.angle = this.player.angle;
           tween = this.add.tween(player);
           tween.to({
-            angle: 720,
             alpha: 0
           }, 500);
           tween.start();
@@ -646,7 +659,7 @@
     create: function() {
       if (!this.game.music) {
         this.game.music = this.add.audio('main');
-        this.game.music.play();
+        this.game.music.play('', 0, 1, true);
       }
       this.menu2 = this.add.sprite(0, 0, 'menu2');
       this.menu1 = this.add.sprite(0, 0, 'menu1');
@@ -697,6 +710,9 @@
       this.load.spritesheet('destroyseed', 'assets/img/destroyseed.png', 30, 30, 4, 0, 0);
       this.load.spritesheet('numbers', 'assets/img/numbers.png', 60, 90, 10, 0, 0);
       this.load.audio('main', ['assets/audio/main.mp3']);
+      this.load.audio('a_destroy', ['assets/audio/destroy.mp3']);
+      this.load.audio('a_growseed', ['assets/audio/growseed.mp3']);
+      this.load.audio('a_push', ['assets/audio/push.mp3']);
       return this.load.bitmapFont('carrier_command', 'assets/fonts/carrier_command.png', 'assets/fonts/carrier_command.xml');
     },
     create: function() {},

@@ -9,8 +9,8 @@ module.exports = MainMenu;
 MainMenu.prototype =
   create: () ->
     if not this.game.music
-      this.game.music = this.add.audio('main');
-      this.game.music.play();
+      @game.music = this.add.audio('main');
+      @game.music.play '', 0, 1, true
 
     @menu2 = this.add.sprite(0, 0, 'menu2');
     @menu1 = this.add.sprite(0, 0, 'menu1');

@@ -13,7 +13,7 @@
     create: function() {
       if (!this.game.music) {
         this.game.music = this.add.audio('main');
-        this.game.music.play();
+        this.game.music.play('', 0, 1, true);
       }
       this.menu2 = this.add.sprite(0, 0, 'menu2');
       this.menu1 = this.add.sprite(0, 0, 'menu1');

@@ -90,6 +90,10 @@ Game.prototype =
     #@bg = @add.image 0, 0, 'border'
     #@bg.fixedToCamera = yes
 
+    @a_destroy = this.add.audio 'a_destroy', 2
+    @a_growseed = this.add.audio 'a_growseed', 2
+    @a_push = this.add.audio 'a_push', 2
+
     @tilemap = @add.tilemap null, TILE_SIZE, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT
     @baselayer = @tilemap.createBlankLayer 'layer1', MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, TILE_SIZE
     @baselayer.fixedToCamera =  no
@@ -126,13 +130,6 @@ Game.prototype =
       if i ==  1
         t = @inv.add new Phaser.Sprite @game, 1 * TILE_SIZE, (16 - n) * TILE_SIZE, 'tilesetgrow'
         t.frame = _dirs_to_tile ''
-        #t = @inv.add new Phaser.Sprite @game, 2 * TILE_SIZE, (16 - n) * TILE_SIZE, 'tilesetgrow'
-        #t.frame = _dirs_to_tile 'left'
-        #t = @inv.add new Phaser.Sprite @game, 1 * TILE_SIZE, (16 - 2 * n - 1) * TILE_SIZE, 'tilesetgrow'
-        #t.frame = _dirs_to_tile 'rightdown'
-        #t = @inv.add new Phaser.Sprite @game, 2 * TILE_SIZE, (16 - 2 * n - 1) * TILE_SIZE, 'tilesetgrow'
-        #t.frame = _dirs_to_tile 'downleft'
-
 
   mk_growseed: (x, y, dir) ->
     s = new Phaser.Sprite(@game, (x + 0.5) * TILE_SIZE, (y + 0.5) * TILE_SIZE, 'growseed')
@@ -200,6 +197,10 @@ Game.prototype =
           unless @tilemap.getTile x + dx, y + dy
             gs = @growseeds.add @mk_growseed x, y, dir
             gs.alpha = 0
+            gs.anchor.setTo 0.5, 10
+            tween = @add.tween gs.anchor
+            tween.to {x:0.5, y:0.5}, 500
+            tween.start()
             tween = @add.tween gs
             tween.to {alpha: 1}, 500
             tween.start()
@@ -220,12 +221,17 @@ Game.prototype =
           unless @tilemap.getTile x + dx, y + dy
             gs = @destroyseeds.add @mk_destroyseed x, y, dir
             gs.alpha = 0
+            gs.anchor.setTo 0.5, 10
+            tween = @add.tween gs.anchor
+            tween.to {x:0.5, y:0.5}, 500
+            tween.start()
             tween = @add.tween gs
             tween.to {alpha: 1}, 500
             tween.start()
             setTimeout (=> 
               if (@destroyseeds.getIndex gs) > -1
                 @destroyseeds.remove gs; @clearTile x, y
+                @a_destroy.play()
             ), 3000
             break
         break
@@ -329,24 +335,22 @@ Game.prototype =
           t = @tilemap.getTileWorldXY s.x, s.y
           if t and t == @tilemap.getTile @s.player.x, @s.player.y
             found = yes
+            # pickup growseed
             if @s.inv.length <= @s.max_inv
               @s.putdown = yes
               @s.inv.push 1
               @upd_inv()
-              
               ss = @world.add @mk_growseed t.x, t.y, 'up'
               ss.angle = s.angle
-              tween = @add.tween ss.scale
-              tween.to {x:0.5, y:0.5}, 1000
-              tween.onComplete.add => @world.remove ss
-              tween.start()
               tween = @add.tween ss
               [dx, dy] = _dxdy _reverse _angle_to_dir s.angle
-              tween.to {alpha:0, x: ss.x + 0.2 * dx * TILE_SIZE, y: ss.y + 0.2 * dy * TILE_SIZE}, 500
+              tween.to {alpha:0, x: ss.x + 0.2 * dx * TILE_SIZE, y: ss.y + 0.2 * dy * TILE_SIZE}, 300
+              tween.onComplete.add => @world.remove ss
               tween.start()
               
               @growseeds.remove s
-            else
+
+            else # kill growseed
               @s.putdown = yes
               @s.inv.push 1
               @upd_inv()
@@ -354,18 +358,19 @@ Game.prototype =
               ss = @world.add @mk_growseed t.x, t.y, 'up'
               ss.angle = s.angle
               tween = @add.tween ss.scale
-              tween.to {x:0.5, y:0.5}, 1000
+              tween.to {x:0.5, y:0.5}, 300
               tween.onComplete.add => @world.remove ss
               tween.start()
               tween = @add.tween ss
               [dx, dy] = _dxdy _reverse _angle_to_dir s.angle
-              tween.to {alpha:0, x: ss.x + 2 * dx * TILE_SIZE, y: ss.y + 2 * dy * TILE_SIZE}, 500
+              tween.to {alpha:0, x: ss.x + 2 * dx * TILE_SIZE, y: ss.y + 2 * dy * TILE_SIZE}, 300
               tween.start()
               
               @growseeds.remove s
 
-
+      
       if @in.space.isDown and not @.moving
+        # kill destroyseed
         @destroyseeds.forEach (s) => if s
           t = @tilemap.getTileWorldXY s.x, s.y
           if t and t == @tilemap.getTile @s.player.x, @s.player.y
@@ -375,12 +380,14 @@ Game.prototype =
             ss = @world.add @mk_destroyseed t.x, t.y, _angle_to_dir s.angle
             tween = @add.tween ss
             [dx, dy] = _dxdy _angle_to_dir s.angle
-            tween.to {alpha:0, x: ss.x + 2 * dx * TILE_SIZE, y: ss.y + 2 * dy * TILE_SIZE}, 500
+            tween.to {alpha:0, x: ss.x + 2 * dx * TILE_SIZE, y: ss.y + 2 * dy * TILE_SIZE}, 300
             tween.onComplete.add => @world.remove ss
             tween.start()
 
             @destroyseeds.remove s
+            @a_push.play()
 
+        # put down growseed
         if not found and not @s.putdown and @s.inv.length > 0
           @s.putdown = yes
           dir = _angle_to_dir @player.angle
@@ -389,11 +396,12 @@ Game.prototype =
             @putTile @s.player.x+dx, @s.player.y+dy
             ss = @world.add @mk_growseed @s.player.x, @s.player.y, dir
             tween = @add.tween ss
-            tween.to {alpha:0, x: ss.x + 2 * dx * TILE_SIZE, y: ss.y + 2 * dy * TILE_SIZE}, 500
+            tween.to {alpha:0, x: ss.x + 2 * dx * TILE_SIZE, y: ss.y + 2 * dy * TILE_SIZE}, 300
             tween.onComplete.add => @world.remove ss
             tween.start()
             @s.inv.pop()
             @upd_inv()
+            @a_growseed.play()
 
       if not @in.space.isDown and @s.putdown
         @s.putdown = no
@@ -406,13 +414,15 @@ Game.prototype =
             @s.moving = yes
             @move_player dir
 
+      #gameover
       if not @tilemap.getTile @s.player.x, @s.player.y
         @s.over = yes
         #@add.text 200, 200, 'game over', color: '#ffffff'
         player = @add.image @player.x, @player.y, 'player'
         player.anchor.setTo .5, .5
+        player.angle = @player.angle
         tween = @add.tween player
-        tween.to {angle: 720, alpha: 0}, 500
+        tween.to {alpha: 0}, 500
         tween.start()
         tween = @add.tween player.scale
         tween.to {x:0.2, y:0.2}, 500

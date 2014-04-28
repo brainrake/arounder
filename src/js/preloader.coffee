@@ -13,19 +13,19 @@ Preloader.prototype =
   preload: () ->
     #// These are the assets we loaded in Boot.js
     #// A nice sparkly background and a loading progress bar
-    #this.background = this.add.sprite(0, 0, 'preloaderBackground');
-    #this.preloadBar = this.add.sprite(300, 400, 'preloaderBar');
+    #@background = this.add.sprite(0, 0, 'preloaderBackground');
+    #@preloadBar = this.add.sprite(300, 400, 'preloaderBar');
 
     #//  This sets the preloadBar sprite as a loader sprite.
     #//  What that does is automatically crop the sprite from 0 to full-width
     #//  as the files below are loaded in.
-    #this.load.setPreloadSprite(this.preloadBar);
+    #@load.setPreloadSprite(this.preloadBar);
 
     #//  Here we load the rest of the assets our game needs.
     #//  As this is just a Project Template I've not provided these assets, swap them for your own.
-    this.load.image('menu1', 'assets/img/menu1.png');
-    this.load.image('menu2', 'assets/img/menu2.png');
-    #this.load.atlas('playButton', 'assets/img/play_button.png', 'assets/img/play_button.json');
+    @load.image('menu1', 'assets/img/menu1.png');
+    @load.image('menu2', 'assets/img/menu2.png');
+    #load.atlas('playButton', 'assets/img/play_button.png', 'assets/img/play_button.json');
     @load.image('border', 'assets/img/border.png');
     @load.image('cloud', 'assets/img/cloud.png');
     @load.image('cloud2', 'assets/img/cloud2.png');
@@ -38,9 +38,13 @@ Preloader.prototype =
     @load.spritesheet('growseed', 'assets/img/growseed.png', 30, 60, 4, 0, 0)
     @load.spritesheet('destroyseed', 'assets/img/destroyseed.png', 30, 30, 4, 0, 0)
     @load.spritesheet('numbers', 'assets/img/numbers.png', 60, 90, 10, 0, 0)
-    #this.load.image('playButton', 'assets/img/button_sprite_sheet.png', 193, 71);
-    this.load.audio('main', ['assets/audio/main.mp3']);
-    this.load.bitmapFont('carrier_command', 'assets/fonts/carrier_command.png', 'assets/fonts/carrier_command.xml');
+    #@load.image('playButton', 'assets/img/button_sprite_sheet.png', 193, 71);
+    @load.audio('main', ['assets/audio/main.mp3']);
+    @load.audio('a_destroy', [ 'assets/audio/destroy.mp3'])
+    @load.audio('a_growseed', [ 'assets/audio/growseed.mp3'])
+    @load.audio('a_push', [ 'assets/audio/push.mp3'])
+
+    @load.bitmapFont('carrier_command', 'assets/fonts/carrier_command.png', 'assets/fonts/carrier_command.xml');
   
 
   create: () ->

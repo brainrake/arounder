@@ -6,11 +6,10 @@
   module.exports = Boot;
 
   Boot.prototype = {
-    preload: function() {
-      return this.load.image('menusharp', 'assets/img/menusharp.png');
-    },
+    preload: function() {},
     create: function() {
       this.game.input.maxPointers = 1;
+      this.game.stage.disableVisibilityChange = true;
       if (this.game.device.desktop) {
         this.game.stage.scale.pageAlignHorizontally = true;
       } else {

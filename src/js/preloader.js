@@ -30,6 +30,9 @@
       this.load.spritesheet('destroyseed', 'assets/img/destroyseed.png', 30, 30, 4, 0, 0);
       this.load.spritesheet('numbers', 'assets/img/numbers.png', 60, 90, 10, 0, 0);
       this.load.audio('main', ['assets/audio/main.mp3']);
+      this.load.audio('a_destroy', ['assets/audio/destroy.mp3']);
+      this.load.audio('a_growseed', ['assets/audio/growseed.mp3']);
+      this.load.audio('a_push', ['assets/audio/push.mp3']);
       return this.load.bitmapFont('carrier_command', 'assets/fonts/carrier_command.png', 'assets/fonts/carrier_command.xml');
     },
     create: function() {},
