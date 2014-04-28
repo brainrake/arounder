@@ -28,9 +28,9 @@ Game = (game) ->
 
 module.exports = Game;
 
-TILE_SIZE = 24
-MAP_HEIGHT = 23
-MAP_WIDTH = 37
+TILE_SIZE = 30
+MAP_HEIGHT = 19
+MAP_WIDTH = 30
 MAP_CENTER_X = (MAP_WIDTH - 1) / 2
 MAP_CENTER_Y = (MAP_HEIGHT - 1) / 2
 
@@ -79,13 +79,15 @@ Game.prototype =
       tween.onComplete.add => img.angle = 0; tween.start()
       tween.start()
 
-    rot 'back', 360, 199999
-    rot 'back2clouds',360, 99999
-    rot 'back2surface', -360, 99999
+    rot 'cloud',360, 99999
+    rot 'cloud', -360, 199999
+    @bg = @load.image 'border'
 
     @tilemap = @add.tilemap null, TILE_SIZE, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT
     @baselayer = @tilemap.createBlankLayer 'layer1', MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, TILE_SIZE
     @tilemap.addTilesetImage('tileset');
+    @surf = @add.group()
+
     @putTile x, y for [x, y] in F_PENTOMINO
 
     @growseeds = @add.group()
@@ -104,12 +106,13 @@ Game.prototype =
 
     @inv = @add.group()
 
+    @upd_surf()
+
   upd_inv: ->
     @inv.removeAll()
     for i, n in @s.inv
       if i ==  1 then  @inv.add @mk_growseed n, 0, 'up'
       if i == -1 then  @inv.add @mk_destroyseed n, 0, 'up'
-      console.log i, n
 
   mk_growseed: (x, y, dir) ->
     s = new Phaser.Sprite(@game, (x + 0.5) * TILE_SIZE, (y + 0.5) * TILE_SIZE, 'growseed')
@@ -129,6 +132,7 @@ Game.prototype =
 
   putTile: (x, y) ->
     @tilemap.putTile 0, x, y
+    @upd_surf()
     @updateTile x, y
     for dir in DIRS
       [dx, dy] = _dxdy dir
@@ -136,6 +140,7 @@ Game.prototype =
 
   clearTile: (x, y) ->
     @tilemap.putTile null, x, y
+    @upd_surf()
     for dir in DIRS
       [dx, dy] = _dxdy dir
       @updateTile x + dx, y + dy
@@ -213,30 +218,107 @@ Game.prototype =
             break
         break
 
+  upd_surf: ->
+    tiles = [[@s.player.x, @s.player.y]]
+    at = 0
+    while 1
+      if at > 100 
+        console.log 'tl', tiles.length
+        return []
+      if at >= tiles.length then break
+      t = tiles[at]
+      for dir in DIRS
+        [dx, dy] = _dxdy dir
+        if @tilemap.getTile t[0] + dx, t[1] + dy
+          found = no
+          for tt in tiles
+            if t[0] + dx == tt[0] and t[1] + dy == tt[1]
+              found = yes
+              break
+          if not found
+            tiles.push [t[0] + dx, t[1] + dy]
+      at += 1
+
+    negtiles = [[0, 0]]
+    outerborder = []
+    at = 0
+    while 1
+      if at > 1000 
+        console.log 'ntl', negtiles.length
+        return []
+      if at >= negtiles.length then break
+      t = negtiles[at]
+
+      foundtile = no
+      for dir in DIRS
+        [dx, dy] = _dxdy dir
+        if (0 <= t[0] + dx and t[0] + dx < MAP_WIDTH) and (0 <= t[1] + dy and t[1] + dy < MAP_HEIGHT) and not @tilemap.getTile t[0] + dx, t[1] + dy
+          found = no
+          for tt in negtiles
+            if t[0] + dx == tt[0] and t[1] + dy == tt[1]
+              found = yes
+              break
+          if not found
+            negtiles.push [t[0] + dx, t[1] + dy]
+        if @tilemap.getTile t[0] + dx, t[1] + dy
+          foundtile = yes
+      if foundtile
+        outerborder.push [t[0], t[1]]
+      at += 1
+
+
+    @surf.removeAll()
+    for b in outerborder
+      s = @surf.add new Phaser.Sprite(@game, (b[0] + 0.5) * TILE_SIZE, (b[1] + 0.5) * TILE_SIZE, 'growseed')
+    console.log outerborder
+
+    #outerborder
+
+
+
   update: ->
     if not @s.over
       found = no
-      if not @.moving
+      if not @.moving and not @s.putdown
         @growseeds.forEach (s) => if s
           t = @tilemap.getTileWorldXY s.x, s.y
           if t and t == @tilemap.getTile @s.player.x, @s.player.y
             found = yes
-            @s.putdown = yes
-            @s.inv.push 1
-            @upd_inv()
-            
-            ss = @world.add @mk_growseed t.x, t.y, 'up'
-            ss.angle = s.angle
-            tween = @add.tween ss.scale
-            tween.to {x:0.5, y:0.5}, 1000
-            tween.onComplete.add => @world.remove ss
-            tween.start()
-            tween = @add.tween ss
-            [dx, dy] = _dxdy _reverse _angle_to_dir s.angle
-            tween.to {alpha:0, x: ss.x + 0.2 * dx * TILE_SIZE, y: ss.y + 0.2 * dy * TILE_SIZE}, 500
-            tween.start()
-            
-            @growseeds.remove s
+            if @s.inv.length <= @s.max_inv
+              @s.putdown = yes
+              @s.inv.push 1
+              @upd_inv()
+              
+              ss = @world.add @mk_growseed t.x, t.y, 'up'
+              ss.angle = s.angle
+              tween = @add.tween ss.scale
+              tween.to {x:0.5, y:0.5}, 1000
+              tween.onComplete.add => @world.remove ss
+              tween.start()
+              tween = @add.tween ss
+              [dx, dy] = _dxdy _reverse _angle_to_dir s.angle
+              tween.to {alpha:0, x: ss.x + 0.2 * dx * TILE_SIZE, y: ss.y + 0.2 * dy * TILE_SIZE}, 500
+              tween.start()
+              
+              @growseeds.remove s
+            else
+              @s.putdown = yes
+              @s.inv.push 1
+              @upd_inv()
+              
+              ss = @world.add @mk_growseed t.x, t.y, 'up'
+              ss.angle = s.angle
+              tween = @add.tween ss.scale
+              tween.to {x:0.5, y:0.5}, 1000
+              tween.onComplete.add => @world.remove ss
+              tween.start()
+              tween = @add.tween ss
+              [dx, dy] = _dxdy _reverse _angle_to_dir s.angle
+              tween.to {alpha:0, x: ss.x + 2 * dx * TILE_SIZE, y: ss.y + 2 * dy * TILE_SIZE}, 500
+              tween.start()
+              
+              @growseeds.remove s
+
 
       if @in.space.isDown and not @.moving
         @destroyseeds.forEach (s) => if s
@@ -259,20 +341,20 @@ Game.prototype =
 
         if not found and not @s.putdown and @s.inv.length > 0
           @s.putdown = yes
-          console.log 'put', @s.inv.pop()
           dir = _angle_to_dir @player.angle
           [dx, dy] = _dxdy dir
-          @putTile @s.player.x+dx, @s.player.y+dy
-          ss = @world.add @mk_growseed @s.player.x, @s.player.y, dir
-          tween = @add.tween ss.scale
-          tween.to {x:0.5, y:0.5}, 1000
-          tween.onComplete.add => @world.remove ss
-          tween.start()
-          tween = @add.tween ss
-          tween.to {alpha:0, x: ss.x + 2 * dx * TILE_SIZE, y: ss.y + 2 * dy * TILE_SIZE}, 1000
-          tween.start()
-          
-          @upd_inv()
+          if not @tilemap.getTile @s.player.x + dx, @s.player.y + dy
+            @putTile @s.player.x+dx, @s.player.y+dy
+            ss = @world.add @mk_growseed @s.player.x, @s.player.y, dir
+            tween = @add.tween ss.scale
+            tween.to {x:0.5, y:0.5}, 1000
+            tween.onComplete.add => @world.remove ss
+            tween.start()
+            tween = @add.tween ss
+            tween.to {alpha:0, x: ss.x + 2 * dx * TILE_SIZE, y: ss.y + 2 * dy * TILE_SIZE}, 1000
+            tween.start()
+            @s.inv.pop()
+            @upd_inv()
 
       if not @in.space.isDown and @s.putdown
         @s.putdown = no
@@ -299,7 +381,7 @@ Game.prototype =
         @world.remove @player
         setTimeout (=>@quitGame()), 2000
         
-        
+
   quitGame: (pointer) ->
     #//  Here you should destroy anything you no longer need.
     #//  Stop music, delete sprites, purge caches, free resources, all that good stuff.

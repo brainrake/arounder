@@ -15,9 +15,8 @@
 
   Preloader.prototype = {
     preload: function() {
-      this.load.image('back', 'assets/img/back.png');
-      this.load.image('back2surface', 'assets/img/back2surface.png');
-      this.load.image('back2clouds', 'assets/img/back2clouds.png');
+      this.load.image('border', 'assets/img/border.png');
+      this.load.image('cloud', 'assets/img/cloud.png');
       this.load.image('backpixel', 'assets/img/backpixel.png');
       this.load.image('tileset', 'assets/img/tileset.png');
       this.load.image('player', 'assets/img/player.png');

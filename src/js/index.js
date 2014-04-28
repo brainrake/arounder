@@ -1,7 +1,7 @@
 (function() {
   var game;
 
-  game = new Phaser.Game(888, 552, Phaser.AUTO, 'game-container');
+  game = new Phaser.Game(900, 570, Phaser.AUTO, 'game-container');
 
   game.state.add('Boot', require('./boot'));
 

@@ -16,10 +16,10 @@
         this.game.stage.scale.pageAlignHorizontally = true;
       } else {
         this.game.stage.scaleMode = Phaser.StageScaleMode.SHOW_ALL;
-        this.game.stage.scale.minWidth = 888;
-        this.game.stage.scale.minHeight = 552;
-        this.game.stage.scale.maxWidth = 888;
-        this.game.stage.scale.maxHeight = 552;
+        this.game.stage.scale.minWidth = 900;
+        this.game.stage.scale.minHeight = 570;
+        this.game.stage.scale.maxWidth = 900;
+        this.game.stage.scale.maxHeight = 570;
         this.game.stage.scale.forceLandscape = true;
         this.game.stage.scale.pageAlignHorizontally = true;
         this.game.stage.scale.setScreenSize(true);
@@ -46,11 +46,11 @@
 
   module.exports = Game;
 
-  TILE_SIZE = 24;
+  TILE_SIZE = 30;
 
-  MAP_HEIGHT = 23;
+  MAP_HEIGHT = 19;
 
-  MAP_WIDTH = 37;
+  MAP_WIDTH = 30;
 
   MAP_CENTER_X = (MAP_WIDTH - 1) / 2;
 
@@ -166,12 +166,13 @@
           return tween.start();
         };
       })(this);
-      rot('back', 360, 199999);
-      rot('back2clouds', 360, 99999);
-      rot('back2surface', -360, 99999);
+      rot('cloud', 360, 99999);
+      rot('cloud', -360, 199999);
+      this.bg = this.load.image('border');
       this.tilemap = this.add.tilemap(null, TILE_SIZE, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT);
       this.baselayer = this.tilemap.createBlankLayer('layer1', MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, TILE_SIZE);
       this.tilemap.addTilesetImage('tileset');
+      this.surf = this.add.group();
       for (_i = 0, _len = F_PENTOMINO.length; _i < _len; _i++) {
         _ref = F_PENTOMINO[_i], x = _ref[0], y = _ref[1];
         this.putTile(x, y);
@@ -195,7 +196,8 @@
       _ref1 = this.s.player, x = _ref1.x, y = _ref1.y;
       this.player = this.add.image((x + .5) * TILE_SIZE, (y + .5) * TILE_SIZE, 'player');
       this.player.anchor.setTo(.5, .5);
-      return this.inv = this.add.group();
+      this.inv = this.add.group();
+      return this.upd_surf();
     },
     upd_inv: function() {
       var i, n, _i, _len, _ref, _results;
@@ -208,9 +210,10 @@
           this.inv.add(this.mk_growseed(n, 0, 'up'));
         }
         if (i === -1) {
-          this.inv.add(this.mk_destroyseed(n, 0, 'up'));
+          _results.push(this.inv.add(this.mk_destroyseed(n, 0, 'up')));
+        } else {
+          _results.push(void 0);
         }
-        _results.push(console.log(i, n));
       }
       return _results;
     },
@@ -235,6 +238,7 @@
     putTile: function(x, y) {
       var dir, dx, dy, _i, _len, _ref, _results;
       this.tilemap.putTile(0, x, y);
+      this.upd_surf();
       this.updateTile(x, y);
       _results = [];
       for (_i = 0, _len = DIRS.length; _i < _len; _i++) {
@@ -247,6 +251,7 @@
     clearTile: function(x, y) {
       var dir, dx, dy, _i, _len, _ref, _results;
       this.tilemap.putTile(null, x, y);
+      this.upd_surf();
       _results = [];
       for (_i = 0, _len = DIRS.length; _i < _len; _i++) {
         dir = DIRS[_i];
@@ -380,41 +385,144 @@
       }
       return _results;
     },
+    upd_surf: function() {
+      var at, b, dir, dx, dy, found, foundtile, negtiles, outerborder, s, t, tiles, tt, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _m, _ref, _ref1;
+      tiles = [[this.s.player.x, this.s.player.y]];
+      at = 0;
+      while (1) {
+        if (at > 100) {
+          console.log('tl', tiles.length);
+          return [];
+        }
+        if (at >= tiles.length) {
+          break;
+        }
+        t = tiles[at];
+        for (_i = 0, _len = DIRS.length; _i < _len; _i++) {
+          dir = DIRS[_i];
+          _ref = _dxdy(dir), dx = _ref[0], dy = _ref[1];
+          if (this.tilemap.getTile(t[0] + dx, t[1] + dy)) {
+            found = false;
+            for (_j = 0, _len1 = tiles.length; _j < _len1; _j++) {
+              tt = tiles[_j];
+              if (t[0] + dx === tt[0] && t[1] + dy === tt[1]) {
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              tiles.push([t[0] + dx, t[1] + dy]);
+            }
+          }
+        }
+        at += 1;
+      }
+      negtiles = [[0, 0]];
+      outerborder = [];
+      at = 0;
+      while (1) {
+        if (at > 1000) {
+          console.log('ntl', negtiles.length);
+          return [];
+        }
+        if (at >= negtiles.length) {
+          break;
+        }
+        t = negtiles[at];
+        foundtile = false;
+        for (_k = 0, _len2 = DIRS.length; _k < _len2; _k++) {
+          dir = DIRS[_k];
+          _ref1 = _dxdy(dir), dx = _ref1[0], dy = _ref1[1];
+          if ((0 <= t[0] + dx && t[0] + dx < MAP_WIDTH) && (0 <= t[1] + dy && t[1] + dy < MAP_HEIGHT) && !this.tilemap.getTile(t[0] + dx, t[1] + dy)) {
+            found = false;
+            for (_l = 0, _len3 = negtiles.length; _l < _len3; _l++) {
+              tt = negtiles[_l];
+              if (t[0] + dx === tt[0] && t[1] + dy === tt[1]) {
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              negtiles.push([t[0] + dx, t[1] + dy]);
+            }
+          }
+          if (this.tilemap.getTile(t[0] + dx, t[1] + dy)) {
+            foundtile = true;
+          }
+        }
+        if (foundtile) {
+          outerborder.push([t[0], t[1]]);
+        }
+        at += 1;
+      }
+      this.surf.removeAll();
+      for (_m = 0, _len4 = outerborder.length; _m < _len4; _m++) {
+        b = outerborder[_m];
+        s = this.surf.add(new Phaser.Sprite(this.game, (b[0] + 0.5) * TILE_SIZE, (b[1] + 0.5) * TILE_SIZE, 'growseed'));
+      }
+      return console.log(outerborder);
+    },
     update: function() {
       var dir, dx, dy, found, player, ss, tween, _i, _len, _ref, _ref1;
       if (!this.s.over) {
         found = false;
-        if (!this.moving) {
+        if (!this.moving && !this.s.putdown) {
           this.growseeds.forEach((function(_this) {
             return function(s) {
-              var dx, dy, ss, t, tween, _ref;
+              var dx, dy, ss, t, tween, _ref, _ref1;
               if (s) {
                 t = _this.tilemap.getTileWorldXY(s.x, s.y);
                 if (t && t === _this.tilemap.getTile(_this.s.player.x, _this.s.player.y)) {
                   found = true;
-                  _this.s.putdown = true;
-                  _this.s.inv.push(1);
-                  _this.upd_inv();
-                  ss = _this.world.add(_this.mk_growseed(t.x, t.y, 'up'));
-                  ss.angle = s.angle;
-                  tween = _this.add.tween(ss.scale);
-                  tween.to({
-                    x: 0.5,
-                    y: 0.5
-                  }, 1000);
-                  tween.onComplete.add(function() {
-                    return _this.world.remove(ss);
-                  });
-                  tween.start();
-                  tween = _this.add.tween(ss);
-                  _ref = _dxdy(_reverse(_angle_to_dir(s.angle))), dx = _ref[0], dy = _ref[1];
-                  tween.to({
-                    alpha: 0,
-                    x: ss.x + 0.2 * dx * TILE_SIZE,
-                    y: ss.y + 0.2 * dy * TILE_SIZE
-                  }, 500);
-                  tween.start();
-                  return _this.growseeds.remove(s);
+                  if (_this.s.inv.length <= _this.s.max_inv) {
+                    _this.s.putdown = true;
+                    _this.s.inv.push(1);
+                    _this.upd_inv();
+                    ss = _this.world.add(_this.mk_growseed(t.x, t.y, 'up'));
+                    ss.angle = s.angle;
+                    tween = _this.add.tween(ss.scale);
+                    tween.to({
+                      x: 0.5,
+                      y: 0.5
+                    }, 1000);
+                    tween.onComplete.add(function() {
+                      return _this.world.remove(ss);
+                    });
+                    tween.start();
+                    tween = _this.add.tween(ss);
+                    _ref = _dxdy(_reverse(_angle_to_dir(s.angle))), dx = _ref[0], dy = _ref[1];
+                    tween.to({
+                      alpha: 0,
+                      x: ss.x + 0.2 * dx * TILE_SIZE,
+                      y: ss.y + 0.2 * dy * TILE_SIZE
+                    }, 500);
+                    tween.start();
+                    return _this.growseeds.remove(s);
+                  } else {
+                    _this.s.putdown = true;
+                    _this.s.inv.push(1);
+                    _this.upd_inv();
+                    ss = _this.world.add(_this.mk_growseed(t.x, t.y, 'up'));
+                    ss.angle = s.angle;
+                    tween = _this.add.tween(ss.scale);
+                    tween.to({
+                      x: 0.5,
+                      y: 0.5
+                    }, 1000);
+                    tween.onComplete.add(function() {
+                      return _this.world.remove(ss);
+                    });
+                    tween.start();
+                    tween = _this.add.tween(ss);
+                    _ref1 = _dxdy(_reverse(_angle_to_dir(s.angle))), dx = _ref1[0], dy = _ref1[1];
+                    tween.to({
+                      alpha: 0,
+                      x: ss.x + 2 * dx * TILE_SIZE,
+                      y: ss.y + 2 * dy * TILE_SIZE
+                    }, 500);
+                    tween.start();
+                    return _this.growseeds.remove(s);
+                  }
                 }
               }
             };
@@ -454,30 +562,32 @@
           })(this));
           if (!found && !this.s.putdown && this.s.inv.length > 0) {
             this.s.putdown = true;
-            console.log('put', this.s.inv.pop());
             dir = _angle_to_dir(this.player.angle);
             _ref = _dxdy(dir), dx = _ref[0], dy = _ref[1];
-            this.putTile(this.s.player.x + dx, this.s.player.y + dy);
-            ss = this.world.add(this.mk_growseed(this.s.player.x, this.s.player.y, dir));
-            tween = this.add.tween(ss.scale);
-            tween.to({
-              x: 0.5,
-              y: 0.5
-            }, 1000);
-            tween.onComplete.add((function(_this) {
-              return function() {
-                return _this.world.remove(ss);
-              };
-            })(this));
-            tween.start();
-            tween = this.add.tween(ss);
-            tween.to({
-              alpha: 0,
-              x: ss.x + 2 * dx * TILE_SIZE,
-              y: ss.y + 2 * dy * TILE_SIZE
-            }, 1000);
-            tween.start();
-            this.upd_inv();
+            if (!this.tilemap.getTile(this.s.player.x + dx, this.s.player.y + dy)) {
+              this.putTile(this.s.player.x + dx, this.s.player.y + dy);
+              ss = this.world.add(this.mk_growseed(this.s.player.x, this.s.player.y, dir));
+              tween = this.add.tween(ss.scale);
+              tween.to({
+                x: 0.5,
+                y: 0.5
+              }, 1000);
+              tween.onComplete.add((function(_this) {
+                return function() {
+                  return _this.world.remove(ss);
+                };
+              })(this));
+              tween.start();
+              tween = this.add.tween(ss);
+              tween.to({
+                alpha: 0,
+                x: ss.x + 2 * dx * TILE_SIZE,
+                y: ss.y + 2 * dy * TILE_SIZE
+              }, 1000);
+              tween.start();
+              this.s.inv.pop();
+              this.upd_inv();
+            }
           }
         }
         if (!this["in"].space.isDown && this.s.putdown) {
@@ -530,7 +640,7 @@
 (function() {
   var game;
 
-  game = new Phaser.Game(888, 552, Phaser.AUTO, 'game-container');
+  game = new Phaser.Game(900, 570, Phaser.AUTO, 'game-container');
 
   game.state.add('Boot', require('./boot'));
 
@@ -592,9 +702,8 @@
 
   Preloader.prototype = {
     preload: function() {
-      this.load.image('back', 'assets/img/back.png');
-      this.load.image('back2surface', 'assets/img/back2surface.png');
-      this.load.image('back2clouds', 'assets/img/back2clouds.png');
+      this.load.image('border', 'assets/img/border.png');
+      this.load.image('cloud', 'assets/img/cloud.png');
       this.load.image('backpixel', 'assets/img/backpixel.png');
       this.load.image('tileset', 'assets/img/tileset.png');
       this.load.image('player', 'assets/img/player.png');

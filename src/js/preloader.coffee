@@ -25,9 +25,8 @@ Preloader.prototype =
     #//  As this is just a Project Template I've not provided these assets, swap them for your own.
     #this.load.image('menusharp', 'assets/img/menusharp.png');
     #this.load.atlas('playButton', 'assets/img/play_button.png', 'assets/img/play_button.json');
-    @load.image('back', 'assets/img/back.png');
-    @load.image('back2surface', 'assets/img/back2surface.png');
-    @load.image('back2clouds', 'assets/img/back2clouds.png');
+    @load.image('border', 'assets/img/border.png');
+    @load.image('cloud', 'assets/img/cloud.png');
     @load.image('backpixel', 'assets/img/backpixel.png');
     @load.image('tileset', 'assets/img/tileset.png');
     @load.image('player', 'assets/img/player.png');
