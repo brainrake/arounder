@@ -41,7 +41,7 @@ BORDER_LEFT = 5
 DIRS = ['up', 'right', 'down', 'left']
 
 _dirs_to_tile = (dirs) -> {
-  up: 0, right: 1, down:2, left:3, updown:4, rightleft:5, upright:8, rightdown:9, downleft: 10, upleft: 11,uprightleft:12, uprightdown: 13, rightdownleft: 14, updownleft: 15, uprightdownleft:16, '':17,}[dirs.join '']
+  up: 0, right: 1, down:2, left:3, updown:4, rightleft:5, upright:8, rightdown:9, downleft: 10, upleft: 11,uprightleft:12, uprightdown: 13, rightdownleft: 14, updownleft: 15, uprightdownleft:16, '':17,}[dirs]
 
 _dxdy = (dir) -> {up: [0, -1], right: [1, 0], down: [0, 1], left: [-1, 0]}[dir]
 
@@ -87,8 +87,8 @@ Game.prototype =
 
     rot 'cloud',360, 99999
     rot 'cloud3',-360, 99999
-    @bg = @add.image 0, 0, 'border'
-    @bg.fixedToCamera = yes
+    #@bg = @add.image 0, 0, 'border'
+    #@bg.fixedToCamera = yes
 
     @tilemap = @add.tilemap null, TILE_SIZE, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT
     @baselayer = @tilemap.createBlankLayer 'layer1', MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, TILE_SIZE
@@ -123,8 +123,16 @@ Game.prototype =
   upd_inv: ->
     @inv.removeAll()
     for i, n in @s.inv
-      if i ==  1 then  @inv.add @mk_growseed n, 0, 'up'
-      if i == -1 then  @inv.add @mk_destroyseed n, 0, 'up'
+      if i ==  1
+        t = @inv.add new Phaser.Sprite @game, 1 * TILE_SIZE, (16 - n) * TILE_SIZE, 'tilesetgrow'
+        t.frame = _dirs_to_tile ''
+        #t = @inv.add new Phaser.Sprite @game, 2 * TILE_SIZE, (16 - n) * TILE_SIZE, 'tilesetgrow'
+        #t.frame = _dirs_to_tile 'left'
+        #t = @inv.add new Phaser.Sprite @game, 1 * TILE_SIZE, (16 - 2 * n - 1) * TILE_SIZE, 'tilesetgrow'
+        #t.frame = _dirs_to_tile 'rightdown'
+        #t = @inv.add new Phaser.Sprite @game, 2 * TILE_SIZE, (16 - 2 * n - 1) * TILE_SIZE, 'tilesetgrow'
+        #t.frame = _dirs_to_tile 'downleft'
+
 
   mk_growseed: (x, y, dir) ->
     s = new Phaser.Sprite(@game, (x + 0.5) * TILE_SIZE, (y + 0.5) * TILE_SIZE, 'growseed')
@@ -164,7 +172,7 @@ Game.prototype =
       [dx, dy] = _dxdy dir
       if @tilemap.getTile  x+dx, y+dy
         dirs[dirs.length] = dir 
-    @tilemap.putTile (_dirs_to_tile dirs), x, y
+    @tilemap.putTile (_dirs_to_tile dirs.join ''), x, y
 
   move_player: (dir) ->
     tween = @add.tween @player
@@ -235,7 +243,6 @@ Game.prototype =
     at = 0
     while 1
       if at > 100 
-        console.log 'tl', tiles.length
         return []
       if at >= tiles.length then break
       t = tiles[at]
@@ -274,7 +281,6 @@ Game.prototype =
           outerborder.push [t[0], t[1], dir]
 
         else
-          console.log 'nointiles'
           if (t[0] + dx >= 0) and (t[1] + dy >= 0) and (t[0] + dx < MAP_WIDTH) and (t[1] + dy < MAP_WIDTH)
             #__ 'inmap'
             if not _in negtiles, t[0] + dx, t[1] + dy
@@ -301,12 +307,15 @@ Game.prototype =
 
     @st.removeAll()
     ls = '' + outerborder.length
+    if ls.length == 1
+      ls = '00'+ls
+    if ls.length == 2
+      ls = '0'+ls
     for lc, n in ls
-      console.log lc, n
       s = @st.add new Phaser.Sprite(@game, 27 * TILE_SIZE, (3 * n + 2) * TILE_SIZE, 'numbers')
       s.frame = lc*1
 
-    __ outerborder.length
+    #__ outerborder.length
     outerborder
 
 

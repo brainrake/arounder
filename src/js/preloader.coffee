@@ -23,7 +23,8 @@ Preloader.prototype =
 
     #//  Here we load the rest of the assets our game needs.
     #//  As this is just a Project Template I've not provided these assets, swap them for your own.
-    #this.load.image('menusharp', 'assets/img/menusharp.png');
+    this.load.image('menu1', 'assets/img/menu1.png');
+    this.load.image('menu2', 'assets/img/menu2.png');
     #this.load.atlas('playButton', 'assets/img/play_button.png', 'assets/img/play_button.json');
     @load.image('border', 'assets/img/border.png');
     @load.image('cloud', 'assets/img/cloud.png');
@@ -33,6 +34,7 @@ Preloader.prototype =
     @load.image('tileset', 'assets/img/tileset.png');
     @load.image('player', 'assets/img/player.png');
     @load.image('surface', 'assets/img/surface.png');
+    @load.spritesheet('tilesetgrow', 'assets/img/tilesetgrow.png', 30, 30, 20, 0, 0);
     @load.spritesheet('growseed', 'assets/img/growseed.png', 30, 60, 4, 0, 0)
     @load.spritesheet('destroyseed', 'assets/img/destroyseed.png', 30, 30, 4, 0, 0)
     @load.spritesheet('numbers', 'assets/img/numbers.png', 60, 90, 10, 0, 0)

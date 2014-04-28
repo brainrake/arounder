@@ -51,7 +51,7 @@
       updownleft: 15,
       uprightdownleft: 16,
       '': 17
-    }[dirs.join('')];
+    }[dirs];
   };
 
   _dxdy = function(dir) {
@@ -144,8 +144,6 @@
       })(this);
       rot('cloud', 360, 99999);
       rot('cloud3', -360, 99999);
-      this.bg = this.add.image(0, 0, 'border');
-      this.bg.fixedToCamera = true;
       this.tilemap = this.add.tilemap(null, TILE_SIZE, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT);
       this.baselayer = this.tilemap.createBlankLayer('layer1', MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, TILE_SIZE);
       this.baselayer.fixedToCamera = false;
@@ -180,17 +178,15 @@
       return this.upd_surf();
     },
     upd_inv: function() {
-      var i, n, _i, _len, _ref, _results;
+      var i, n, t, _i, _len, _ref, _results;
       this.inv.removeAll();
       _ref = this.s.inv;
       _results = [];
       for (n = _i = 0, _len = _ref.length; _i < _len; n = ++_i) {
         i = _ref[n];
         if (i === 1) {
-          this.inv.add(this.mk_growseed(n, 0, 'up'));
-        }
-        if (i === -1) {
-          _results.push(this.inv.add(this.mk_destroyseed(n, 0, 'up')));
+          t = this.inv.add(new Phaser.Sprite(this.game, 1 * TILE_SIZE, (16 - n) * TILE_SIZE, 'tilesetgrow'));
+          _results.push(t.frame = _dirs_to_tile(''));
         } else {
           _results.push(void 0);
         }
@@ -253,7 +249,7 @@
           dirs[dirs.length] = dir;
         }
       }
-      return this.tilemap.putTile(_dirs_to_tile(dirs), x, y);
+      return this.tilemap.putTile(_dirs_to_tile(dirs.join('')), x, y);
     },
     move_player: function(dir) {
       var dx, dy, tween, _ref;
@@ -362,7 +358,6 @@
       at = 0;
       while (1) {
         if (at > 100) {
-          console.log('tl', tiles.length);
           return [];
         }
         if (at >= tiles.length) {
@@ -389,7 +384,7 @@
         at += 1;
       }
       this.surf.removeAll();
-      'outerborder = []\nat = -1\nwhile 1\n  at += 1\n  if at > 1000 \n    __ \'ntl\', negtiles.length\n    return []\n  if at >= negtiles.length then break\n  t = negtiles[at]\n\n  for dir in DIRS\n    [dx, dy] = _dxdy dir\n    #__ \'dir\', dir\n    if _in tiles, t[0]+dx, t[1]+dx\n      #__ \'intiles\'\n      outerborder.push [t[0], t[1], dir]\n\n    else\n      console.log \'nointiles\'\n      if (t[0] + dx >= 0) and (t[1] + dy >= 0) and (t[0] + dx < MAP_WIDTH) and (t[1] + dy < MAP_WIDTH)\n        #__ \'inmap\'\n        if not _in negtiles, t[0] + dx, t[1] + dy\n\n          negtiles.push [t[0] + dx, t[1] + dy]';
+      'outerborder = []\nat = -1\nwhile 1\n  at += 1\n  if at > 1000 \n    __ \'ntl\', negtiles.length\n    return []\n  if at >= negtiles.length then break\n  t = negtiles[at]\n\n  for dir in DIRS\n    [dx, dy] = _dxdy dir\n    #__ \'dir\', dir\n    if _in tiles, t[0]+dx, t[1]+dx\n      #__ \'intiles\'\n      outerborder.push [t[0], t[1], dir]\n\n    else\n      if (t[0] + dx >= 0) and (t[1] + dy >= 0) and (t[0] + dx < MAP_WIDTH) and (t[1] + dy < MAP_WIDTH)\n        #__ \'inmap\'\n        if not _in negtiles, t[0] + dx, t[1] + dy\n\n          negtiles.push [t[0] + dx, t[1] + dy]';
       outerborder = [];
       for (_k = 0, _len2 = tiles.length; _k < _len2; _k++) {
         t = tiles[_k];
@@ -407,13 +402,17 @@
       }
       this.st.removeAll();
       ls = '' + outerborder.length;
+      if (ls.length === 1) {
+        ls = '00' + ls;
+      }
+      if (ls.length === 2) {
+        ls = '0' + ls;
+      }
       for (n = _m = 0, _len4 = ls.length; _m < _len4; n = ++_m) {
         lc = ls[n];
-        console.log(lc, n);
         s = this.st.add(new Phaser.Sprite(this.game, 27 * TILE_SIZE, (3 * n + 2) * TILE_SIZE, 'numbers'));
         s.frame = lc * 1;
       }
-      __(outerborder.length);
       return outerborder;
     },
     update: function() {
