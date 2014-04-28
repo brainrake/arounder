@@ -32,7 +32,12 @@
 
 },{}],2:[function(require,module,exports){
 (function() {
-  var DIRS, F_PENTOMINO, Game, MAP_CENTER_X, MAP_CENTER_Y, MAP_HEIGHT, MAP_WIDTH, TILE_SIZE, _angle, _dirs_to_tile, _dxdy, _reverse;
+  var DIRS, F_PENTOMINO, Game, MAP_CENTER_X, MAP_CENTER_Y, MAP_HEIGHT, MAP_WIDTH, TILE_SIZE, __, _angle, _angle_to_dir, _dirs_to_tile, _dxdy, _reverse;
+
+  __ = function() {
+    console.log.apply(console, arguments);
+    return arguments[0];
+  };
 
   Game = function(game) {
     '/*\nthis.game;      // a reference to the currently running game\nthis.add;       // used to add sprites, text, groups, etc\nthis.camera;    // a reference to the game camera\nthis.cache;     // the game cache\nthis.input;     // the global input manager (you can access this.input.keyboard, this.input.mouse, as well from it)\nthis.load;      // for preloading assets\nthis.math;      // lots of useful common math operations\nthis.sound;     // the sound manager - add a sound, play one, set-up markers, etc\nthis.stage;     // the game stage\nthis.time;      // the clock\nthis.tweens;    // the tween manager\nthis.world;     // the game world\nthis.particles; // the particle manager\nthis.physics;   // the physics manager\nthis.rnd;       // the repeatable random number generator\n*/';
@@ -70,7 +75,7 @@
       rightdownleft: 14,
       updownleft: 15,
       uprightdownleft: 16,
-      '': 19
+      '': 17
     }[dirs.join('')];
   };
 
@@ -101,6 +106,17 @@
     }[dir];
   };
 
+  _angle_to_dir = function(angle) {
+    return {
+      '0': 'up',
+      '90': 'right',
+      '180': 'down',
+      '-180': 'down',
+      '270': 'left',
+      '-90': 'left'
+    }[angle];
+  };
+
   F_PENTOMINO = [[18, 10], [19, 10], [17, 11], [18, 11], [18, 12]];
 
   (function() {
@@ -112,7 +128,7 @@
 
   Game.prototype = {
     create: function() {
-      var tween, x, y, _i, _len, _ref, _ref1;
+      var rot, x, y, _i, _len, _ref, _ref1;
       this.s = {
         moving: false,
         player: {
@@ -130,48 +146,26 @@
         cursors: this.input.keyboard.createCursorKeys(),
         space: this.input.keyboard.addKey('32')
       };
-      this.bg_rot = this.add.image(580, 550, 'back');
-      this.bg_rot.anchor.setTo(.5, .5);
-      this.bg_rot.alpha = 0.8;
-      tween = this.add.tween(this.bg_rot);
-      tween.to({
-        angle: 360
-      }, 199999);
-      tween.onComplete.add((function(_this) {
-        return function() {
-          _this.bg_rot.angle = 0;
+      rot = (function(_this) {
+        return function(res, angle, period) {
+          var img, tween;
+          img = _this.add.image(580, 550, res);
+          img.anchor.setTo(.5, .5);
+          img.alpha = 1;
+          tween = _this.add.tween(img);
+          tween.to({
+            angle: angle
+          }, period);
+          tween.onComplete.add(function() {
+            img.angle = 0;
+            return tween.start();
+          });
           return tween.start();
         };
-      })(this));
-      tween.start();
-      this.bg_rot2 = this.add.image(580, 550, 'back2clouds');
-      this.bg_rot2.anchor.setTo(.5, .5);
-      this.bg_rot2.alpha = 1;
-      tween = this.add.tween(this.bg_rot2);
-      tween.to({
-        angle: 360
-      }, 99999);
-      tween.onComplete.add((function(_this) {
-        return function() {
-          _this.bg_rot2.angle = 0;
-          return tween.start();
-        };
-      })(this));
-      tween.start();
-      this.bg_rot3 = this.add.image(580, 550, 'back2surface');
-      this.bg_rot3.anchor.setTo(.5, .5);
-      this.bg_rot3.alpha = 1;
-      tween = this.add.tween(this.bg_rot3);
-      tween.to({
-        angle: -360
-      }, 99999);
-      tween.onComplete.add((function(_this) {
-        return function() {
-          _this.bg_rot3.angle = 0;
-          return tween.start();
-        };
-      })(this));
-      tween.start();
+      })(this);
+      rot('back', 360, 199999);
+      rot('back2clouds', 360, 99999);
+      rot('back2surface', -360, 99999);
       this.tilemap = this.add.tilemap(null, TILE_SIZE, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT);
       this.baselayer = this.tilemap.createBlankLayer('layer1', MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, TILE_SIZE);
       this.tilemap.addTilesetImage('tileset');
@@ -275,7 +269,7 @@
       return tween.start();
     },
     expand: function() {
-      var dir, dx, dy, gs, i, x, y, _i, _ref, _ref1, _results;
+      var dir, dx, dy, gs, i, tween, x, y, _i, _ref, _ref1, _results;
       _results = [];
       for (i = _i = 1; _i <= 1000; i = ++_i) {
         _ref = [this.rnd.integerInRange(1, MAP_WIDTH - 2), this.rnd.integerInRange(1, MAP_HEIGHT - 2)], x = _ref[0], y = _ref[1];
@@ -285,6 +279,22 @@
             _ref1 = _dxdy(dir), dx = _ref1[0], dy = _ref1[1];
             if (!this.tilemap.getTile(x + dx, y + dy)) {
               gs = this.growseeds.add(this.mk_growseed(x, y, dir));
+              gs.alpha = 0;
+              gs.scale = {
+                x: 3,
+                y: 3
+              };
+              tween = this.add.tween(gs.scale);
+              tween.to({
+                x: 1,
+                y: 1
+              }, 500);
+              tween.start();
+              tween = this.add.tween(gs);
+              tween.to({
+                alpha: 1
+              }, 500);
+              tween.start();
               setTimeout(((function(_this) {
                 return function() {
                   if ((_this.growseeds.getIndex(gs)) > -1) {
@@ -304,7 +314,7 @@
       return _results;
     },
     contract: function() {
-      var dir, dx, dy, gs, i, x, y, _i, _ref, _ref1, _results;
+      var dir, dx, dy, gs, i, tween, x, y, _i, _ref, _ref1, _results;
       _results = [];
       for (i = _i = 1; _i <= 1000; i = ++_i) {
         _ref = [this.rnd.integerInRange(1, MAP_WIDTH - 2), this.rnd.integerInRange(1, MAP_HEIGHT - 2)], x = _ref[0], y = _ref[1];
@@ -314,6 +324,22 @@
             _ref1 = _dxdy(dir), dx = _ref1[0], dy = _ref1[1];
             if (!this.tilemap.getTile(x + dx, y + dy)) {
               gs = this.destroyseeds.add(this.mk_destroyseed(x, y, dir));
+              gs.alpha = 0;
+              gs.scale = {
+                x: 3,
+                y: 3
+              };
+              tween = this.add.tween(gs.scale);
+              tween.to({
+                x: 1,
+                y: 1
+              }, 500);
+              tween.start();
+              tween = this.add.tween(gs);
+              tween.to({
+                alpha: 1
+              }, 500);
+              tween.start();
               setTimeout(((function(_this) {
                 return function() {
                   if ((_this.destroyseeds.getIndex(gs)) > -1) {
@@ -333,15 +359,34 @@
       return _results;
     },
     update: function() {
-      var dir, dx, dy, _i, _len, _ref;
+      var dir, dx, dy, player, tween, _i, _len, _ref;
       if (!this.s.over) {
         if (this["in"].space.isDown && !this.moving) {
           this.growseeds.forEach((function(_this) {
             return function(s) {
-              var t;
+              var dx, dy, ss, t, tween, _ref;
               if (s) {
                 t = _this.tilemap.getTileWorldXY(s.x, s.y);
                 if (t && t === _this.tilemap.getTile(_this.s.player.x, _this.s.player.y)) {
+                  ss = _this.world.add(_this.mk_growseed(t.x, t.y, 'up'));
+                  ss.angle = s.angle;
+                  tween = _this.add.tween(ss.scale);
+                  tween.to({
+                    x: 2,
+                    y: 2
+                  }, 1000);
+                  tween.onComplete.add(function() {
+                    return _this.world.remove(ss);
+                  });
+                  tween.start();
+                  tween = _this.add.tween(ss);
+                  _ref = _dxdy(_angle_to_dir(s.angle)), dx = _ref[0], dy = _ref[1];
+                  tween.to({
+                    alpha: 0,
+                    x: ss.x + 2 * dx * TILE_SIZE,
+                    y: ss.y + 2 * dy * TILE_SIZE
+                  }, 1000);
+                  tween.start();
                   return _this.growseeds.remove(s);
                 }
               }
@@ -349,6 +394,35 @@
           })(this));
         }
         if (this["in"].space.isDown && !this.moving) {
+          this.destroyseeds.forEach((function(_this) {
+            return function(s) {
+              var dx, dy, ss, t, tween, _ref;
+              if (s) {
+                t = _this.tilemap.getTileWorldXY(s.x, s.y);
+                if (t && t === _this.tilemap.getTile(_this.s.player.x, _this.s.player.y)) {
+                  ss = _this.world.add(_this.mk_destroyseed(t.x, t.y, _angle_to_dir(s.angle)));
+                  tween = _this.add.tween(ss.scale);
+                  tween.to({
+                    x: 2,
+                    y: 2
+                  }, 1000);
+                  tween.onComplete.add(function() {
+                    return _this.world.remove(ss);
+                  });
+                  tween.start();
+                  tween = _this.add.tween(ss);
+                  _ref = _dxdy(_angle_to_dir(s.angle)), dx = _ref[0], dy = _ref[1];
+                  tween.to({
+                    alpha: 0,
+                    x: ss.x + 2 * dx * TILE_SIZE,
+                    y: ss.y + 2 * dy * TILE_SIZE
+                  }, 1000);
+                  tween.start();
+                  return _this.destroyseeds.remove(s);
+                }
+              }
+            };
+          })(this));
           this.destroyseeds.forEach((function(_this) {
             return function(s) {
               var t;
@@ -374,9 +448,21 @@
         }
         if (!this.tilemap.getTile(this.s.player.x, this.s.player.y)) {
           this.s.over = true;
-          this.add.text(200, 200, 'game over', {
-            color: '#ffffff'
-          });
+          player = this.add.image(this.player.x, this.player.y, 'player');
+          player.anchor.setTo(.5, .5);
+          tween = this.add.tween(player);
+          tween.to({
+            angle: 720,
+            alpha: 0
+          }, 500);
+          tween.start();
+          tween = this.add.tween(player.scale);
+          tween.to({
+            x: 0.2,
+            y: 0.2
+          }, 500);
+          tween.start();
+          this.world.remove(this.player);
           return setTimeout(((function(_this) {
             return function() {
               return _this.quitGame();

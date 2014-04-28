@@ -1,3 +1,5 @@
+__ = -> console.log arguments...; arguments[0]
+
 Game = (game) ->
   #// When a State is added to Phaser it automatically has the following properties set on it, 
   #// even if they already exist:
@@ -35,7 +37,7 @@ MAP_CENTER_Y = (MAP_HEIGHT - 1) / 2
 DIRS = ['up', 'right', 'down', 'left']
 
 _dirs_to_tile = (dirs) -> {
-  up: 0, right: 1, down:2, left:3, updown:4, rightleft:5, upright:8, rightdown:9, downleft: 10, upleft: 11,uprightleft:12, uprightdown: 13, rightdownleft: 14, updownleft: 15, uprightdownleft:16, '':19,}[dirs.join '']
+  up: 0, right: 1, down:2, left:3, updown:4, rightleft:5, upright:8, rightdown:9, downleft: 10, upleft: 11,uprightleft:12, uprightdown: 13, rightdownleft: 14, updownleft: 15, uprightdownleft:16, '':17,}[dirs.join '']
 
 _dxdy = (dir) -> {up: [0, -1], right: [1, 0], down: [0, 1], left: [-1, 0]}[dir]
 
@@ -43,6 +45,7 @@ _angle = (dir) -> {up: 0, right: 90, down: 180, left: 270}[dir]
 
 _reverse = (dir) -> {up: 'down', right: 'left', down: 'up', left: 'right'}[dir]
 
+_angle_to_dir = (angle) -> {'0': 'up', '90': 'right', '180': 'down', '-180': 'down', '270': 'left', '-90': 'left'}[angle]
 
 F_PENTOMINO = [[18, 10], [19, 10], [17, 11], [18, 11], [18, 12]]
 
@@ -64,29 +67,18 @@ Game.prototype =
       cursors: @input.keyboard.createCursorKeys()
       space: @input.keyboard.addKey '32'
     
-    #@bg_static = @add.image 0, 0, 'backpixel'
-    @bg_rot = @add.image 580, 550, 'back'
-    @bg_rot.anchor.setTo .5, .5
-    @bg_rot.alpha = 0.8
-    tween = @add.tween @bg_rot
-    tween.to (angle: 360), 199999
-    tween.onComplete.add => @bg_rot.angle = 0; tween.start()
-    tween.start()
-    @bg_rot2 = @add.image 580, 550, 'back2clouds'
-    @bg_rot2.anchor.setTo .5, .5
-    @bg_rot2.alpha = 1
-    tween = @add.tween @bg_rot2
-    tween.to (angle: 360), 99999
-    tween.onComplete.add => @bg_rot2.angle = 0; tween.start()
-    tween.start()
-    @bg_rot3 = @add.image 580, 550, 'back2surface'
-    @bg_rot3.anchor.setTo .5, .5
-    @bg_rot3.alpha = 1
-    tween = @add.tween @bg_rot3
-    tween.to (angle: -360), 99999
-    tween.onComplete.add => @bg_rot3.angle = 0; tween.start()
-    tween.start()
-    
+    rot = (res, angle, period) =>
+      img = @add.image 580, 550, res
+      img.anchor.setTo .5, .5
+      img.alpha = 1 #0.8
+      tween = @add.tween img
+      tween.to (angle: angle), period
+      tween.onComplete.add => img.angle = 0; tween.start()
+      tween.start()
+
+    rot 'back', 360, 199999
+    rot 'back2clouds',360, 99999
+    rot 'back2surface', -360, 99999
 
     @tilemap = @add.tilemap null, TILE_SIZE, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT
     @baselayer = @tilemap.createBlankLayer 'layer1', MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, TILE_SIZE
@@ -170,6 +162,14 @@ Game.prototype =
           [dx, dy] = _dxdy dir
           unless @tilemap.getTile x + dx, y + dy
             gs = @growseeds.add @mk_growseed x, y, dir
+            gs.alpha = 0
+            gs.scale = {x: 3, y:3}
+            tween = @add.tween gs.scale
+            tween.to {x: 1, y: 1}, 500
+            tween.start()
+            tween = @add.tween gs
+            tween.to {alpha: 1}, 500
+            tween.start()
             setTimeout (=> 
               if (@growseeds.getIndex gs) > -1
                 @growseeds.remove gs; @putTile x+dx, y+dy
@@ -186,6 +186,14 @@ Game.prototype =
           [dx, dy] = _dxdy dir
           unless @tilemap.getTile x + dx, y + dy
             gs = @destroyseeds.add @mk_destroyseed x, y, dir
+            gs.alpha = 0
+            gs.scale = {x: 3, y:3}
+            tween = @add.tween gs.scale
+            tween.to {x: 1, y: 1}, 500
+            tween.start()
+            tween = @add.tween gs
+            tween.to {alpha: 1}, 500
+            tween.start()
             setTimeout (=> 
               if (@destroyseeds.getIndex gs) > -1
                 @destroyseeds.remove gs; @clearTile x, y
@@ -199,12 +207,37 @@ Game.prototype =
         @growseeds.forEach (s) => if s
           t = @tilemap.getTileWorldXY s.x, s.y
           if t and t == @tilemap.getTile @s.player.x, @s.player.y
+            ss = @world.add @mk_growseed t.x, t.y, 'up'
+            ss.angle = s.angle
+            tween = @add.tween ss.scale
+            tween.to {x:2, y:2}, 1000
+            tween.onComplete.add => @world.remove ss
+            tween.start()
+            tween = @add.tween ss
+            [dx, dy] = _dxdy _angle_to_dir s.angle
+            tween.to {alpha:0, x: ss.x + 2 * dx * TILE_SIZE, y: ss.y + 2 * dy * TILE_SIZE}, 1000
+            tween.start()
             @growseeds.remove s
+
       if @in.space.isDown and not @.moving
         @destroyseeds.forEach (s) => if s
           t = @tilemap.getTileWorldXY s.x, s.y
           if t and t == @tilemap.getTile @s.player.x, @s.player.y
+            ss = @world.add @mk_destroyseed t.x, t.y, _angle_to_dir s.angle
+            tween = @add.tween ss.scale
+            tween.to {x:2, y:2}, 1000
+            tween.onComplete.add => @world.remove ss
+            tween.start()
+            tween = @add.tween ss
+            [dx, dy] = _dxdy _angle_to_dir s.angle
+            tween.to {alpha:0, x: ss.x + 2 * dx * TILE_SIZE, y: ss.y + 2 * dy * TILE_SIZE}, 1000
+            tween.start()
             @destroyseeds.remove s
+        @destroyseeds.forEach (s) => if s
+          t = @tilemap.getTileWorldXY s.x, s.y
+          if t and t == @tilemap.getTile @s.player.x, @s.player.y
+            @destroyseeds.remove s
+
       for dir in DIRS
         if @in.cursors[dir].isDown and not @s.moving
           @player.angle = _angle dir
@@ -215,7 +248,16 @@ Game.prototype =
 
       if not @tilemap.getTile @s.player.x, @s.player.y
         @s.over = yes
-        @add.text 200, 200, 'game over', color: '#ffffff'
+        #@add.text 200, 200, 'game over', color: '#ffffff'
+        player = @add.image @player.x, @player.y, 'player'
+        player.anchor.setTo .5, .5
+        tween = @add.tween player
+        tween.to {angle: 720, alpha: 0}, 500
+        tween.start()
+        tween = @add.tween player.scale
+        tween.to {x:0.2, y:0.2}, 500
+        tween.start()
+        @world.remove @player
         setTimeout (=>@quitGame()), 2000
         
         
