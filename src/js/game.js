@@ -1,5 +1,5 @@
 (function() {
-  var DIRS, F_PENTOMINO, Game, MAP_CENTER_X, MAP_CENTER_Y, MAP_HEIGHT, MAP_WIDTH, TILE_SIZE, __, _angle, _angle_to_dir, _dirs_to_tile, _dxdy, _reverse;
+  var BORDER_BOTTOM, BORDER_LEFT, BORDER_RIGHT, BORDER_TOP, DIRS, F_PENTOMINO, Game, MAP_CENTER_X, MAP_CENTER_Y, MAP_HEIGHT, MAP_WIDTH, TILE_SIZE, __, _angle, _angle_to_dir, _dirs_to_tile, _dxdy, _reverse;
 
   __ = function() {
     console.log.apply(console, arguments);
@@ -15,13 +15,21 @@
 
   TILE_SIZE = 30;
 
-  MAP_HEIGHT = 19;
+  MAP_HEIGHT = 21;
 
   MAP_WIDTH = 30;
 
-  MAP_CENTER_X = (MAP_WIDTH - 1) / 2;
+  MAP_CENTER_X = (MAP_WIDTH - 2) / 2;
 
-  MAP_CENTER_Y = (MAP_HEIGHT - 1) / 2;
+  MAP_CENTER_Y = (MAP_HEIGHT - 3) / 2;
+
+  BORDER_TOP = 5;
+
+  BORDER_RIGHT = 20;
+
+  BORDER_BOTTOM = 20;
+
+  BORDER_LEFT = 5;
 
   DIRS = ['up', 'right', 'down', 'left'];
 
@@ -43,7 +51,7 @@
       updownleft: 15,
       uprightdownleft: 16,
       '': 17
-    }[dirs.join('')];
+    }[dirs];
   };
 
   _dxdy = function(dir) {
@@ -84,7 +92,7 @@
     }[angle];
   };
 
-  F_PENTOMINO = [[18, 10], [19, 10], [17, 11], [18, 11], [18, 12]];
+  F_PENTOMINO = [[0, -1], [1, -1], [-1, 0], [0, 0], [0, 1]];
 
   (function() {
     function _Class() {}
@@ -99,12 +107,12 @@
       this.s = {
         moving: false,
         player: {
-          x: 18,
-          y: 11
+          x: MAP_CENTER_X,
+          y: MAP_CENTER_Y
         },
         dest: {
-          x: 18,
-          y: 11
+          x: MAP_CENTER_X,
+          y: MAP_CENTER_Y
         },
         expanding: false,
         over: false,
@@ -119,7 +127,8 @@
       rot = (function(_this) {
         return function(res, angle, period) {
           var img, tween;
-          img = _this.add.image(580, 550, res);
+          img = _this.add.image(450, 285, res);
+          img.fixedToCamera = true;
           img.anchor.setTo(.5, .5);
           img.alpha = 1;
           tween = _this.add.tween(img);
@@ -134,15 +143,16 @@
         };
       })(this);
       rot('cloud', 360, 99999);
-      rot('cloud', -360, 199999);
-      this.bg = this.load.image('border');
+      rot('cloud3', -360, 99999);
       this.tilemap = this.add.tilemap(null, TILE_SIZE, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT);
       this.baselayer = this.tilemap.createBlankLayer('layer1', MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, TILE_SIZE);
+      this.baselayer.fixedToCamera = false;
       this.tilemap.addTilesetImage('tileset');
       this.surf = this.add.group();
+      this.st = this.add.group();
       for (_i = 0, _len = F_PENTOMINO.length; _i < _len; _i++) {
         _ref = F_PENTOMINO[_i], x = _ref[0], y = _ref[1];
-        this.putTile(x, y);
+        this.putTile(MAP_CENTER_X + x, MAP_CENTER_Y + y);
       }
       this.growseeds = this.add.group();
       this.growseed_timer = this.game.time.create(false);
@@ -164,20 +174,19 @@
       this.player = this.add.image((x + .5) * TILE_SIZE, (y + .5) * TILE_SIZE, 'player');
       this.player.anchor.setTo(.5, .5);
       this.inv = this.add.group();
+      rot('cloud2', 360, 199999);
       return this.upd_surf();
     },
     upd_inv: function() {
-      var i, n, _i, _len, _ref, _results;
+      var i, n, t, _i, _len, _ref, _results;
       this.inv.removeAll();
       _ref = this.s.inv;
       _results = [];
       for (n = _i = 0, _len = _ref.length; _i < _len; n = ++_i) {
         i = _ref[n];
         if (i === 1) {
-          this.inv.add(this.mk_growseed(n, 0, 'up'));
-        }
-        if (i === -1) {
-          _results.push(this.inv.add(this.mk_destroyseed(n, 0, 'up')));
+          t = this.inv.add(new Phaser.Sprite(this.game, 1 * TILE_SIZE, (16 - n) * TILE_SIZE, 'tilesetgrow'));
+          _results.push(t.frame = _dirs_to_tile(''));
         } else {
           _results.push(void 0);
         }
@@ -187,7 +196,7 @@
     mk_growseed: function(x, y, dir) {
       var s;
       s = new Phaser.Sprite(this.game, (x + 0.5) * TILE_SIZE, (y + 0.5) * TILE_SIZE, 'growseed');
-      s.anchor.setTo(.5, 0.6);
+      s.anchor.setTo(.5, .5);
       s.angle = _angle(dir);
       s.animations.add('play');
       s.animations.play('play', 10, true);
@@ -196,7 +205,7 @@
     mk_destroyseed: function(x, y, dir) {
       var s;
       s = new Phaser.Sprite(this.game, (x + 0.5) * TILE_SIZE, (y + 0.5) * TILE_SIZE, 'destroyseed');
-      s.anchor.setTo(.5, 0.5);
+      s.anchor.setTo(.5, .5);
       s.angle = _angle(dir);
       s.animations.add('play');
       s.animations.play('play', 10, true);
@@ -240,7 +249,7 @@
           dirs[dirs.length] = dir;
         }
       }
-      return this.tilemap.putTile(_dirs_to_tile(dirs), x, y);
+      return this.tilemap.putTile(_dirs_to_tile(dirs.join('')), x, y);
     },
     move_player: function(dir) {
       var dx, dy, tween, _ref;
@@ -266,7 +275,7 @@
       var dir, dx, dy, gs, i, tween, x, y, _i, _ref, _ref1, _results;
       _results = [];
       for (i = _i = 1; _i <= 1000; i = ++_i) {
-        _ref = [this.rnd.integerInRange(1, MAP_WIDTH - 2), this.rnd.integerInRange(1, MAP_HEIGHT - 2)], x = _ref[0], y = _ref[1];
+        _ref = [this.rnd.integerInRange(BORDER_LEFT, BORDER_RIGHT), this.rnd.integerInRange(BORDER_TOP, BORDER_BOTTOM)], x = _ref[0], y = _ref[1];
         if ((this.tilemap.getTile(x, y)) && (this.tilemap.getTile(x, y)).index !== 16) {
           while (1) {
             dir = DIRS[this.rnd.integerInRange(0, 3)];
@@ -274,16 +283,6 @@
             if (!this.tilemap.getTile(x + dx, y + dy)) {
               gs = this.growseeds.add(this.mk_growseed(x, y, dir));
               gs.alpha = 0;
-              gs.scale = {
-                x: 3,
-                y: 3
-              };
-              tween = this.add.tween(gs.scale);
-              tween.to({
-                x: 1,
-                y: 1
-              }, 500);
-              tween.start();
               tween = this.add.tween(gs);
               tween.to({
                 alpha: 1
@@ -311,7 +310,7 @@
       var dir, dx, dy, gs, i, tween, x, y, _i, _ref, _ref1, _results;
       _results = [];
       for (i = _i = 1; _i <= 1000; i = ++_i) {
-        _ref = [this.rnd.integerInRange(1, MAP_WIDTH - 2), this.rnd.integerInRange(1, MAP_HEIGHT - 2)], x = _ref[0], y = _ref[1];
+        _ref = [this.rnd.integerInRange(BORDER_LEFT, BORDER_RIGHT), this.rnd.integerInRange(BORDER_TOP, BORDER_BOTTOM)], x = _ref[0], y = _ref[1];
         if ((this.tilemap.getTile(x, y)) && (this.tilemap.getTile(x, y)).index !== 16) {
           while (1) {
             dir = DIRS[this.rnd.integerInRange(0, 3)];
@@ -319,16 +318,6 @@
             if (!this.tilemap.getTile(x + dx, y + dy)) {
               gs = this.destroyseeds.add(this.mk_destroyseed(x, y, dir));
               gs.alpha = 0;
-              gs.scale = {
-                x: 3,
-                y: 3
-              };
-              tween = this.add.tween(gs.scale);
-              tween.to({
-                x: 1,
-                y: 1
-              }, 500);
-              tween.start();
               tween = this.add.tween(gs);
               tween.to({
                 alpha: 1
@@ -353,12 +342,22 @@
       return _results;
     },
     upd_surf: function() {
-      var at, dir, dx, dy, found, foundtile, negtiles, outerborder, s, t, tiles, tt, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1;
+      var at, b, dir, dx, dy, found, lc, ls, n, negtiles, outerborder, s, t, tiles, tt, _i, _in, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _m, _ref, _ref1;
       tiles = [[this.s.player.x, this.s.player.y]];
+      negtiles = [[0, 0]];
+      _in = function(ts, x, y) {
+        var t, _i, _len;
+        for (_i = 0, _len = ts.length; _i < _len; _i++) {
+          t = ts[_i];
+          if (t[0] === x && t[1] === y) {
+            return true;
+          }
+        }
+        return false;
+      };
       at = 0;
       while (1) {
         if (at > 100) {
-          console.log('tl', tiles.length);
           return [];
         }
         if (at >= tiles.length) {
@@ -385,47 +384,36 @@
         at += 1;
       }
       this.surf.removeAll();
-      negtiles = [[0, 0]];
+      'outerborder = []\nat = -1\nwhile 1\n  at += 1\n  if at > 1000 \n    __ \'ntl\', negtiles.length\n    return []\n  if at >= negtiles.length then break\n  t = negtiles[at]\n\n  for dir in DIRS\n    [dx, dy] = _dxdy dir\n    #__ \'dir\', dir\n    if _in tiles, t[0]+dx, t[1]+dx\n      #__ \'intiles\'\n      outerborder.push [t[0], t[1], dir]\n\n    else\n      if (t[0] + dx >= 0) and (t[1] + dy >= 0) and (t[0] + dx < MAP_WIDTH) and (t[1] + dy < MAP_WIDTH)\n        #__ \'inmap\'\n        if not _in negtiles, t[0] + dx, t[1] + dy\n\n          negtiles.push [t[0] + dx, t[1] + dy]';
       outerborder = [];
-      at = 0;
-      while (1) {
-        if (at > 1000) {
-          console.log('ntl', negtiles.length);
-          return [];
-        }
-        if (at >= negtiles.length) {
-          break;
-        }
-        t = negtiles[at];
-        foundtile = false;
-        for (_k = 0, _len2 = DIRS.length; _k < _len2; _k++) {
-          dir = DIRS[_k];
+      for (_k = 0, _len2 = tiles.length; _k < _len2; _k++) {
+        t = tiles[_k];
+        for (_l = 0, _len3 = DIRS.length; _l < _len3; _l++) {
+          dir = DIRS[_l];
           _ref1 = _dxdy(dir), dx = _ref1[0], dy = _ref1[1];
-          if ((0 <= t[0] + dx && t[0] + dx < MAP_WIDTH) && (0 <= t[1] + dy && t[1] + dy < MAP_HEIGHT) && !this.tilemap.getTile(t[0] + dx, t[1] + dy)) {
-            found = false;
-            for (_l = 0, _len3 = negtiles.length; _l < _len3; _l++) {
-              tt = negtiles[_l];
-              if (t[0] + dx === tt[0] && t[1] + dy === tt[1]) {
-                found = true;
-                break;
-              }
-            }
-            if (!found) {
-              negtiles.push([t[0] + dx, t[1] + dy]);
-            }
-          }
-          if (this.tilemap.getTile(t[0] + dx, t[1] + dy)) {
-            s = this.surf.add(new Phaser.Sprite(this.game, (t[0] + 0.5) * TILE_SIZE, (t[1] + 0.5) * TILE_SIZE, 'surface'));
+          if (!this.tilemap.getTile(t[0] + dx, t[1] + dy)) {
+            b = [t[0] + dx, t[1] + dy, _reverse(dir)];
+            outerborder.push(b);
+            s = this.surf.add(new Phaser.Sprite(this.game, (b[0] + 0.5) * TILE_SIZE, (b[1] + 0.5) * TILE_SIZE, 'surface'));
             s.anchor.setTo(0.5, 0.5);
-            s.angle = _angle(dir);
+            s.angle = _angle(b[2]);
           }
         }
-        if (foundtile) {
-          outerborder.push([t[0], t[1]]);
-        }
-        at += 1;
       }
-      return console.log(outerborder);
+      this.st.removeAll();
+      ls = '' + outerborder.length;
+      if (ls.length === 1) {
+        ls = '00' + ls;
+      }
+      if (ls.length === 2) {
+        ls = '0' + ls;
+      }
+      for (n = _m = 0, _len4 = ls.length; _m < _len4; n = ++_m) {
+        lc = ls[n];
+        s = this.st.add(new Phaser.Sprite(this.game, 27 * TILE_SIZE, (3 * n + 2) * TILE_SIZE, 'numbers'));
+        s.frame = lc * 1;
+      }
+      return outerborder;
     },
     update: function() {
       var dir, dx, dy, found, player, ss, tween, _i, _len, _ref, _ref1;
@@ -503,22 +491,16 @@
                   found = true;
                   _this.s.putdown = true;
                   ss = _this.world.add(_this.mk_destroyseed(t.x, t.y, _angle_to_dir(s.angle)));
-                  tween = _this.add.tween(ss.scale);
-                  tween.to({
-                    x: 0.5,
-                    y: 0.5
-                  }, 1000);
-                  tween.onComplete.add(function() {
-                    return _this.world.remove(ss);
-                  });
-                  tween.start();
                   tween = _this.add.tween(ss);
                   _ref = _dxdy(_angle_to_dir(s.angle)), dx = _ref[0], dy = _ref[1];
                   tween.to({
                     alpha: 0,
                     x: ss.x + 2 * dx * TILE_SIZE,
                     y: ss.y + 2 * dy * TILE_SIZE
-                  }, 1000);
+                  }, 500);
+                  tween.onComplete.add(function() {
+                    return _this.world.remove(ss);
+                  });
                   tween.start();
                   return _this.destroyseeds.remove(s);
                 }
@@ -532,23 +514,17 @@
             if (!this.tilemap.getTile(this.s.player.x + dx, this.s.player.y + dy)) {
               this.putTile(this.s.player.x + dx, this.s.player.y + dy);
               ss = this.world.add(this.mk_growseed(this.s.player.x, this.s.player.y, dir));
-              tween = this.add.tween(ss.scale);
-              tween.to({
-                x: 0.5,
-                y: 0.5
-              }, 1000);
-              tween.onComplete.add((function(_this) {
-                return function() {
-                  return _this.world.remove(ss);
-                };
-              })(this));
-              tween.start();
               tween = this.add.tween(ss);
               tween.to({
                 alpha: 0,
                 x: ss.x + 2 * dx * TILE_SIZE,
                 y: ss.y + 2 * dy * TILE_SIZE
-              }, 1000);
+              }, 500);
+              tween.onComplete.add((function(_this) {
+                return function() {
+                  return _this.world.remove(ss);
+                };
+              })(this));
               tween.start();
               this.s.inv.pop();
               this.upd_inv();

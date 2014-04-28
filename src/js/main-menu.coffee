@@ -12,7 +12,8 @@ MainMenu.prototype =
       this.game.music = this.add.audio('main');
       this.game.music.play();
 
-    @bg = this.add.sprite(0, 0, 'menusharp');
+    @menu2 = this.add.sprite(0, 0, 'menu2');
+    @menu1 = this.add.sprite(0, 0, 'menu1');
 
     #this.playButton = this.add.button(400, 300, 'playButton', this.startGame, this, 2, 1, 0);
 

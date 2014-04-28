@@ -15,7 +15,8 @@
         this.game.music = this.add.audio('main');
         this.game.music.play();
       }
-      this.bg = this.add.sprite(0, 0, 'menusharp');
+      this.menu2 = this.add.sprite(0, 0, 'menu2');
+      this.menu1 = this.add.sprite(0, 0, 'menu1');
       return setTimeout(((function(_this) {
         return function() {
           return _this.startGame();
