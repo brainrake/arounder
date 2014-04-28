@@ -62,6 +62,9 @@ Game.prototype =
       dest: x:18, y:11
       expanding: no
       over:no
+      putdown: no
+      inv: []
+      max_inv: 3
 
     @in = 
       cursors: @input.keyboard.createCursorKeys()
@@ -99,6 +102,14 @@ Game.prototype =
     @player = @add.image (x + .5) * TILE_SIZE, (y + .5) * TILE_SIZE, 'player'
     @player.anchor.setTo .5, .5
 
+    @inv = @add.group()
+
+  upd_inv: ->
+    @inv.removeAll()
+    for i, n in @s.inv
+      if i ==  1 then  @inv.add @mk_growseed n, 0, 'up'
+      if i == -1 then  @inv.add @mk_destroyseed n, 0, 'up'
+      console.log i, n
 
   mk_growseed: (x, y, dir) ->
     s = new Phaser.Sprite(@game, (x + 0.5) * TILE_SIZE, (y + 0.5) * TILE_SIZE, 'growseed')
@@ -149,6 +160,7 @@ Game.prototype =
     @s.dest.y = @s.player.y + dy
     tween.onComplete.add =>
       @s.moving = no
+      @s.putdown = no
       @s.player.x = @s.dest.x
       @s.player.y = @s.dest.y
     tween.start()
@@ -203,40 +215,67 @@ Game.prototype =
 
   update: ->
     if not @s.over
-      if @in.space.isDown and not @.moving
+      found = no
+      if not @.moving
         @growseeds.forEach (s) => if s
           t = @tilemap.getTileWorldXY s.x, s.y
           if t and t == @tilemap.getTile @s.player.x, @s.player.y
+            found = yes
+            @s.putdown = yes
+            @s.inv.push 1
+            @upd_inv()
+            
             ss = @world.add @mk_growseed t.x, t.y, 'up'
             ss.angle = s.angle
             tween = @add.tween ss.scale
-            tween.to {x:2, y:2}, 1000
+            tween.to {x:0.5, y:0.5}, 1000
             tween.onComplete.add => @world.remove ss
             tween.start()
             tween = @add.tween ss
-            [dx, dy] = _dxdy _angle_to_dir s.angle
-            tween.to {alpha:0, x: ss.x + 2 * dx * TILE_SIZE, y: ss.y + 2 * dy * TILE_SIZE}, 1000
+            [dx, dy] = _dxdy _reverse _angle_to_dir s.angle
+            tween.to {alpha:0, x: ss.x + 0.2 * dx * TILE_SIZE, y: ss.y + 0.2 * dy * TILE_SIZE}, 500
             tween.start()
+            
             @growseeds.remove s
 
       if @in.space.isDown and not @.moving
         @destroyseeds.forEach (s) => if s
           t = @tilemap.getTileWorldXY s.x, s.y
           if t and t == @tilemap.getTile @s.player.x, @s.player.y
+            found = yes
+            @s.putdown = yes
+            
             ss = @world.add @mk_destroyseed t.x, t.y, _angle_to_dir s.angle
             tween = @add.tween ss.scale
-            tween.to {x:2, y:2}, 1000
+            tween.to {x:0.5, y:0.5}, 1000
             tween.onComplete.add => @world.remove ss
             tween.start()
             tween = @add.tween ss
             [dx, dy] = _dxdy _angle_to_dir s.angle
             tween.to {alpha:0, x: ss.x + 2 * dx * TILE_SIZE, y: ss.y + 2 * dy * TILE_SIZE}, 1000
             tween.start()
+
             @destroyseeds.remove s
-        @destroyseeds.forEach (s) => if s
-          t = @tilemap.getTileWorldXY s.x, s.y
-          if t and t == @tilemap.getTile @s.player.x, @s.player.y
-            @destroyseeds.remove s
+
+        if not found and not @s.putdown and @s.inv.length > 0
+          @s.putdown = yes
+          console.log 'put', @s.inv.pop()
+          dir = _angle_to_dir @player.angle
+          [dx, dy] = _dxdy dir
+          @putTile @s.player.x+dx, @s.player.y+dy
+          ss = @world.add @mk_growseed @s.player.x, @s.player.y, dir
+          tween = @add.tween ss.scale
+          tween.to {x:0.5, y:0.5}, 1000
+          tween.onComplete.add => @world.remove ss
+          tween.start()
+          tween = @add.tween ss
+          tween.to {alpha:0, x: ss.x + 2 * dx * TILE_SIZE, y: ss.y + 2 * dy * TILE_SIZE}, 1000
+          tween.start()
+          
+          @upd_inv()
+
+      if not @in.space.isDown and @s.putdown
+        @s.putdown = no
 
       for dir in DIRS
         if @in.cursors[dir].isDown and not @s.moving

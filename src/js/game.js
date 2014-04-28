@@ -107,7 +107,10 @@
           y: 11
         },
         expanding: false,
-        over: false
+        over: false,
+        putdown: false,
+        inv: [],
+        max_inv: 3
       };
       this["in"] = {
         cursors: this.input.keyboard.createCursorKeys(),
@@ -158,7 +161,25 @@
       this.destroyseed_timer.start();
       _ref1 = this.s.player, x = _ref1.x, y = _ref1.y;
       this.player = this.add.image((x + .5) * TILE_SIZE, (y + .5) * TILE_SIZE, 'player');
-      return this.player.anchor.setTo(.5, .5);
+      this.player.anchor.setTo(.5, .5);
+      return this.inv = this.add.group();
+    },
+    upd_inv: function() {
+      var i, n, _i, _len, _ref, _results;
+      this.inv.removeAll();
+      _ref = this.s.inv;
+      _results = [];
+      for (n = _i = 0, _len = _ref.length; _i < _len; n = ++_i) {
+        i = _ref[n];
+        if (i === 1) {
+          this.inv.add(this.mk_growseed(n, 0, 'up'));
+        }
+        if (i === -1) {
+          this.inv.add(this.mk_destroyseed(n, 0, 'up'));
+        }
+        _results.push(console.log(i, n));
+      }
+      return _results;
     },
     mk_growseed: function(x, y, dir) {
       var s;
@@ -229,6 +250,7 @@
       tween.onComplete.add((function(_this) {
         return function() {
           _this.s.moving = false;
+          _this.s.putdown = false;
           _this.s.player.x = _this.s.dest.x;
           return _this.s.player.y = _this.s.dest.y;
         };
@@ -326,33 +348,38 @@
       return _results;
     },
     update: function() {
-      var dir, dx, dy, player, tween, _i, _len, _ref;
+      var dir, dx, dy, found, player, ss, tween, _i, _len, _ref, _ref1;
       if (!this.s.over) {
-        if (this["in"].space.isDown && !this.moving) {
+        found = false;
+        if (!this.moving) {
           this.growseeds.forEach((function(_this) {
             return function(s) {
               var dx, dy, ss, t, tween, _ref;
               if (s) {
                 t = _this.tilemap.getTileWorldXY(s.x, s.y);
                 if (t && t === _this.tilemap.getTile(_this.s.player.x, _this.s.player.y)) {
+                  found = true;
+                  _this.s.putdown = true;
+                  _this.s.inv.push(1);
+                  _this.upd_inv();
                   ss = _this.world.add(_this.mk_growseed(t.x, t.y, 'up'));
                   ss.angle = s.angle;
                   tween = _this.add.tween(ss.scale);
                   tween.to({
-                    x: 2,
-                    y: 2
+                    x: 0.5,
+                    y: 0.5
                   }, 1000);
                   tween.onComplete.add(function() {
                     return _this.world.remove(ss);
                   });
                   tween.start();
                   tween = _this.add.tween(ss);
-                  _ref = _dxdy(_angle_to_dir(s.angle)), dx = _ref[0], dy = _ref[1];
+                  _ref = _dxdy(_reverse(_angle_to_dir(s.angle))), dx = _ref[0], dy = _ref[1];
                   tween.to({
                     alpha: 0,
-                    x: ss.x + 2 * dx * TILE_SIZE,
-                    y: ss.y + 2 * dy * TILE_SIZE
-                  }, 1000);
+                    x: ss.x + 0.2 * dx * TILE_SIZE,
+                    y: ss.y + 0.2 * dy * TILE_SIZE
+                  }, 500);
                   tween.start();
                   return _this.growseeds.remove(s);
                 }
@@ -367,11 +394,13 @@
               if (s) {
                 t = _this.tilemap.getTileWorldXY(s.x, s.y);
                 if (t && t === _this.tilemap.getTile(_this.s.player.x, _this.s.player.y)) {
+                  found = true;
+                  _this.s.putdown = true;
                   ss = _this.world.add(_this.mk_destroyseed(t.x, t.y, _angle_to_dir(s.angle)));
                   tween = _this.add.tween(ss.scale);
                   tween.to({
-                    x: 2,
-                    y: 2
+                    x: 0.5,
+                    y: 0.5
                   }, 1000);
                   tween.onComplete.add(function() {
                     return _this.world.remove(ss);
@@ -390,23 +419,42 @@
               }
             };
           })(this));
-          this.destroyseeds.forEach((function(_this) {
-            return function(s) {
-              var t;
-              if (s) {
-                t = _this.tilemap.getTileWorldXY(s.x, s.y);
-                if (t && t === _this.tilemap.getTile(_this.s.player.x, _this.s.player.y)) {
-                  return _this.destroyseeds.remove(s);
-                }
-              }
-            };
-          })(this));
+          if (!found && !this.s.putdown && this.s.inv.length > 0) {
+            this.s.putdown = true;
+            console.log('put', this.s.inv.pop());
+            dir = _angle_to_dir(this.player.angle);
+            _ref = _dxdy(dir), dx = _ref[0], dy = _ref[1];
+            this.putTile(this.s.player.x + dx, this.s.player.y + dy);
+            ss = this.world.add(this.mk_growseed(this.s.player.x, this.s.player.y, dir));
+            tween = this.add.tween(ss.scale);
+            tween.to({
+              x: 0.5,
+              y: 0.5
+            }, 1000);
+            tween.onComplete.add((function(_this) {
+              return function() {
+                return _this.world.remove(ss);
+              };
+            })(this));
+            tween.start();
+            tween = this.add.tween(ss);
+            tween.to({
+              alpha: 0,
+              x: ss.x + 2 * dx * TILE_SIZE,
+              y: ss.y + 2 * dy * TILE_SIZE
+            }, 1000);
+            tween.start();
+            this.upd_inv();
+          }
+        }
+        if (!this["in"].space.isDown && this.s.putdown) {
+          this.s.putdown = false;
         }
         for (_i = 0, _len = DIRS.length; _i < _len; _i++) {
           dir = DIRS[_i];
           if (this["in"].cursors[dir].isDown && !this.s.moving) {
             this.player.angle = _angle(dir);
-            _ref = _dxdy(dir), dx = _ref[0], dy = _ref[1];
+            _ref1 = _dxdy(dir), dx = _ref1[0], dy = _ref1[1];
             if (this.tilemap.getTile(this.s.player.x + dx, this.s.player.y + dy)) {
               this.s.moving = true;
               this.move_player(dir);
