@@ -25,7 +25,7 @@
       this.load.image('surface', 'assets/img/surface.png');
       this.load.spritesheet('growseed', 'assets/img/growseed.png', 30, 60, 4, 0, 0);
       this.load.spritesheet('destroyseed', 'assets/img/destroyseed.png', 30, 30, 4, 0, 0);
-      this.load.image('playButton', 'assets/img/button_sprite_sheet.png', 193, 71);
+      this.load.spritesheet('numbers', 'assets/img/numbers.png', 60, 90, 10, 0, 0);
       this.load.audio('main', ['assets/audio/main.mp3']);
       return this.load.bitmapFont('carrier_command', 'assets/fonts/carrier_command.png', 'assets/fonts/carrier_command.xml');
     },

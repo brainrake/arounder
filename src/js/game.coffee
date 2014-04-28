@@ -33,6 +33,10 @@ MAP_HEIGHT = 21
 MAP_WIDTH = 30
 MAP_CENTER_X = (MAP_WIDTH - 2) / 2
 MAP_CENTER_Y = (MAP_HEIGHT - 3) / 2
+BORDER_TOP = 5
+BORDER_RIGHT = 20
+BORDER_BOTTOM = 20
+BORDER_LEFT = 5
 
 DIRS = ['up', 'right', 'down', 'left']
 
@@ -91,7 +95,7 @@ Game.prototype =
     @baselayer.fixedToCamera =  no
     @tilemap.addTilesetImage('tileset');
     @surf = @add.group()
-    @st = @
+    @st = @add.group()
 
     for [x, y] in F_PENTOMINO
       @putTile MAP_CENTER_X + x, MAP_CENTER_Y + y 
@@ -180,7 +184,7 @@ Game.prototype =
 
   expand: ->
     for i in [1..1000]
-      [x, y] = [(@rnd.integerInRange 1, MAP_WIDTH-2), (@rnd.integerInRange 1, MAP_HEIGHT-2)]
+      [x, y] = [(@rnd.integerInRange BORDER_LEFT, BORDER_RIGHT), (@rnd.integerInRange BORDER_TOP, BORDER_BOTTOM)]
       if (@tilemap.getTile x, y) and (@tilemap.getTile x, y).index != 16
         while 1
           dir = DIRS[@rnd.integerInRange 0, 3]
@@ -200,7 +204,7 @@ Game.prototype =
 
   contract: ->
     for i in [1..1000]
-      [x, y] = [(@rnd.integerInRange 1, MAP_WIDTH-2), (@rnd.integerInRange 1, MAP_HEIGHT-2)]
+      [x, y] = [(@rnd.integerInRange BORDER_LEFT, BORDER_RIGHT), (@rnd.integerInRange BORDER_TOP, BORDER_BOTTOM)]
       if (@tilemap.getTile x, y) and (@tilemap.getTile x, y).index != 16
         while 1
           dir = DIRS[@rnd.integerInRange 0, 3]
@@ -247,8 +251,8 @@ Game.prototype =
             tiles.push [t[0] + dx, t[1] + dy]
       at += 1
 
-    __ 'tiles'
-    __ tiles
+    #__ 'tiles'
+    #__ tiles
     @surf.removeAll()
 
     '''
@@ -293,9 +297,17 @@ Game.prototype =
           s = @surf.add new Phaser.Sprite(@game, (b[0] + 0.5) * TILE_SIZE, (b[1] + 0.5) * TILE_SIZE, 'surface')
           s.anchor.setTo 0.5, 0.5
           s.angle = _angle b[2]
-    
 
-    #outerborder
+
+    @st.removeAll()
+    ls = '' + outerborder.length
+    for lc, n in ls
+      console.log lc, n
+      s = @st.add new Phaser.Sprite(@game, 27 * TILE_SIZE, (3 * n + 2) * TILE_SIZE, 'numbers')
+      s.frame = lc*1
+
+    __ outerborder.length
+    outerborder
 
 
 

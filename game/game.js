@@ -32,7 +32,7 @@
 
 },{}],2:[function(require,module,exports){
 (function() {
-  var DIRS, F_PENTOMINO, Game, MAP_CENTER_X, MAP_CENTER_Y, MAP_HEIGHT, MAP_WIDTH, TILE_SIZE, __, _angle, _angle_to_dir, _dirs_to_tile, _dxdy, _reverse;
+  var BORDER_BOTTOM, BORDER_LEFT, BORDER_RIGHT, BORDER_TOP, DIRS, F_PENTOMINO, Game, MAP_CENTER_X, MAP_CENTER_Y, MAP_HEIGHT, MAP_WIDTH, TILE_SIZE, __, _angle, _angle_to_dir, _dirs_to_tile, _dxdy, _reverse;
 
   __ = function() {
     console.log.apply(console, arguments);
@@ -55,6 +55,14 @@
   MAP_CENTER_X = (MAP_WIDTH - 2) / 2;
 
   MAP_CENTER_Y = (MAP_HEIGHT - 3) / 2;
+
+  BORDER_TOP = 5;
+
+  BORDER_RIGHT = 20;
+
+  BORDER_BOTTOM = 20;
+
+  BORDER_LEFT = 5;
 
   DIRS = ['up', 'right', 'down', 'left'];
 
@@ -176,7 +184,7 @@
       this.baselayer.fixedToCamera = false;
       this.tilemap.addTilesetImage('tileset');
       this.surf = this.add.group();
-      this.st = this;
+      this.st = this.add.group();
       for (_i = 0, _len = F_PENTOMINO.length; _i < _len; _i++) {
         _ref = F_PENTOMINO[_i], x = _ref[0], y = _ref[1];
         this.putTile(MAP_CENTER_X + x, MAP_CENTER_Y + y);
@@ -304,7 +312,7 @@
       var dir, dx, dy, gs, i, tween, x, y, _i, _ref, _ref1, _results;
       _results = [];
       for (i = _i = 1; _i <= 1000; i = ++_i) {
-        _ref = [this.rnd.integerInRange(1, MAP_WIDTH - 2), this.rnd.integerInRange(1, MAP_HEIGHT - 2)], x = _ref[0], y = _ref[1];
+        _ref = [this.rnd.integerInRange(BORDER_LEFT, BORDER_RIGHT), this.rnd.integerInRange(BORDER_TOP, BORDER_BOTTOM)], x = _ref[0], y = _ref[1];
         if ((this.tilemap.getTile(x, y)) && (this.tilemap.getTile(x, y)).index !== 16) {
           while (1) {
             dir = DIRS[this.rnd.integerInRange(0, 3)];
@@ -339,7 +347,7 @@
       var dir, dx, dy, gs, i, tween, x, y, _i, _ref, _ref1, _results;
       _results = [];
       for (i = _i = 1; _i <= 1000; i = ++_i) {
-        _ref = [this.rnd.integerInRange(1, MAP_WIDTH - 2), this.rnd.integerInRange(1, MAP_HEIGHT - 2)], x = _ref[0], y = _ref[1];
+        _ref = [this.rnd.integerInRange(BORDER_LEFT, BORDER_RIGHT), this.rnd.integerInRange(BORDER_TOP, BORDER_BOTTOM)], x = _ref[0], y = _ref[1];
         if ((this.tilemap.getTile(x, y)) && (this.tilemap.getTile(x, y)).index !== 16) {
           while (1) {
             dir = DIRS[this.rnd.integerInRange(0, 3)];
@@ -371,7 +379,7 @@
       return _results;
     },
     upd_surf: function() {
-      var at, b, dir, dx, dy, found, negtiles, outerborder, s, t, tiles, tt, _i, _in, _j, _k, _len, _len1, _len2, _ref, _results;
+      var at, b, dir, dx, dy, found, lc, ls, n, negtiles, outerborder, s, t, tiles, tt, _i, _in, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _m, _ref, _ref1;
       tiles = [[this.s.player.x, this.s.player.y]];
       negtiles = [[0, 0]];
       _in = function(ts, x, y) {
@@ -413,34 +421,33 @@
         }
         at += 1;
       }
-      __('tiles');
-      __(tiles);
       this.surf.removeAll();
       'outerborder = []\nat = -1\nwhile 1\n  at += 1\n  if at > 1000 \n    __ \'ntl\', negtiles.length\n    return []\n  if at >= negtiles.length then break\n  t = negtiles[at]\n\n  for dir in DIRS\n    [dx, dy] = _dxdy dir\n    #__ \'dir\', dir\n    if _in tiles, t[0]+dx, t[1]+dx\n      #__ \'intiles\'\n      outerborder.push [t[0], t[1], dir]\n\n    else\n      console.log \'nointiles\'\n      if (t[0] + dx >= 0) and (t[1] + dy >= 0) and (t[0] + dx < MAP_WIDTH) and (t[1] + dy < MAP_WIDTH)\n        #__ \'inmap\'\n        if not _in negtiles, t[0] + dx, t[1] + dy\n\n          negtiles.push [t[0] + dx, t[1] + dy]';
       outerborder = [];
-      _results = [];
       for (_k = 0, _len2 = tiles.length; _k < _len2; _k++) {
         t = tiles[_k];
-        _results.push((function() {
-          var _l, _len3, _ref1, _results1;
-          _results1 = [];
-          for (_l = 0, _len3 = DIRS.length; _l < _len3; _l++) {
-            dir = DIRS[_l];
-            _ref1 = _dxdy(dir), dx = _ref1[0], dy = _ref1[1];
-            if (!this.tilemap.getTile(t[0] + dx, t[1] + dy)) {
-              b = [t[0] + dx, t[1] + dy, _reverse(dir)];
-              outerborder.push(b);
-              s = this.surf.add(new Phaser.Sprite(this.game, (b[0] + 0.5) * TILE_SIZE, (b[1] + 0.5) * TILE_SIZE, 'surface'));
-              s.anchor.setTo(0.5, 0.5);
-              _results1.push(s.angle = _angle(b[2]));
-            } else {
-              _results1.push(void 0);
-            }
+        for (_l = 0, _len3 = DIRS.length; _l < _len3; _l++) {
+          dir = DIRS[_l];
+          _ref1 = _dxdy(dir), dx = _ref1[0], dy = _ref1[1];
+          if (!this.tilemap.getTile(t[0] + dx, t[1] + dy)) {
+            b = [t[0] + dx, t[1] + dy, _reverse(dir)];
+            outerborder.push(b);
+            s = this.surf.add(new Phaser.Sprite(this.game, (b[0] + 0.5) * TILE_SIZE, (b[1] + 0.5) * TILE_SIZE, 'surface'));
+            s.anchor.setTo(0.5, 0.5);
+            s.angle = _angle(b[2]);
           }
-          return _results1;
-        }).call(this));
+        }
       }
-      return _results;
+      this.st.removeAll();
+      ls = '' + outerborder.length;
+      for (n = _m = 0, _len4 = ls.length; _m < _len4; n = ++_m) {
+        lc = ls[n];
+        console.log(lc, n);
+        s = this.st.add(new Phaser.Sprite(this.game, 27 * TILE_SIZE, (3 * n + 2) * TILE_SIZE, 'numbers'));
+        s.frame = lc * 1;
+      }
+      __(outerborder.length);
+      return outerborder;
     },
     update: function() {
       var dir, dx, dy, found, player, ss, tween, _i, _len, _ref, _ref1;
@@ -685,7 +692,7 @@
       this.load.image('surface', 'assets/img/surface.png');
       this.load.spritesheet('growseed', 'assets/img/growseed.png', 30, 60, 4, 0, 0);
       this.load.spritesheet('destroyseed', 'assets/img/destroyseed.png', 30, 30, 4, 0, 0);
-      this.load.image('playButton', 'assets/img/button_sprite_sheet.png', 193, 71);
+      this.load.spritesheet('numbers', 'assets/img/numbers.png', 60, 90, 10, 0, 0);
       this.load.audio('main', ['assets/audio/main.mp3']);
       return this.load.bitmapFont('carrier_command', 'assets/fonts/carrier_command.png', 'assets/fonts/carrier_command.xml');
     },
