@@ -29,10 +29,10 @@ Game = (game) ->
 module.exports = Game;
 
 TILE_SIZE = 30
-MAP_HEIGHT = 19
+MAP_HEIGHT = 21
 MAP_WIDTH = 30
-MAP_CENTER_X = (MAP_WIDTH - 1) / 2
-MAP_CENTER_Y = (MAP_HEIGHT - 1) / 2
+MAP_CENTER_X = (MAP_WIDTH - 2) / 2
+MAP_CENTER_Y = (MAP_HEIGHT - 3) / 2
 
 DIRS = ['up', 'right', 'down', 'left']
 
@@ -47,7 +47,7 @@ _reverse = (dir) -> {up: 'down', right: 'left', down: 'up', left: 'right'}[dir]
 
 _angle_to_dir = (angle) -> {'0': 'up', '90': 'right', '180': 'down', '-180': 'down', '270': 'left', '-90': 'left'}[angle]
 
-F_PENTOMINO = [[18, 10], [19, 10], [17, 11], [18, 11], [18, 12]]
+F_PENTOMINO = [[0, -1], [1, -1], [-1, 0], [0, 0], [0, 1]]
 
 
 class 
@@ -58,8 +58,8 @@ Game.prototype =
   create: ->
     @s = 
       moving: no
-      player: x: 18, y: 11
-      dest: x:18, y:11
+      player: x: MAP_CENTER_X, y:MAP_CENTER_Y
+      dest: x: MAP_CENTER_X, y:MAP_CENTER_Y
       expanding: no
       over:no
       putdown: no
@@ -71,7 +71,8 @@ Game.prototype =
       space: @input.keyboard.addKey '32'
     
     rot = (res, angle, period) =>
-      img = @add.image 580, 550, res
+      img = @add.image 450, 285, res
+      img.fixedToCamera = yes
       img.anchor.setTo .5, .5
       img.alpha = 1 #0.8
       tween = @add.tween img
@@ -79,16 +80,21 @@ Game.prototype =
       tween.onComplete.add => img.angle = 0; tween.start()
       tween.start()
 
+
     rot 'cloud',360, 99999
-    rot 'cloud', -360, 199999
-    @bg = @load.image 'border'
+    rot 'cloud3',-360, 99999
+    @bg = @add.image 0, 0, 'border'
+    @bg.fixedToCamera = yes
 
     @tilemap = @add.tilemap null, TILE_SIZE, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT
     @baselayer = @tilemap.createBlankLayer 'layer1', MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, TILE_SIZE
+    @baselayer.fixedToCamera =  no
     @tilemap.addTilesetImage('tileset');
     @surf = @add.group()
+    @st = @
 
-    @putTile x, y for [x, y] in F_PENTOMINO
+    for [x, y] in F_PENTOMINO
+      @putTile MAP_CENTER_X + x, MAP_CENTER_Y + y 
 
     @growseeds = @add.group()
     @growseed_timer = @game.time.create no
@@ -106,6 +112,8 @@ Game.prototype =
 
     @inv = @add.group()
 
+    rot 'cloud2', 360, 199999
+
     @upd_surf()
 
   upd_inv: ->
@@ -116,7 +124,7 @@ Game.prototype =
 
   mk_growseed: (x, y, dir) ->
     s = new Phaser.Sprite(@game, (x + 0.5) * TILE_SIZE, (y + 0.5) * TILE_SIZE, 'growseed')
-    s.anchor.setTo .5, 0.6
+    s.anchor.setTo .5, .5
     s.angle = _angle dir
     s.animations.add 'play'
     s.animations.play 'play', 10, true
@@ -124,7 +132,7 @@ Game.prototype =
 
   mk_destroyseed: (x, y, dir) ->
     s = new Phaser.Sprite(@game, (x + 0.5) * TILE_SIZE, (y + 0.5) * TILE_SIZE, 'destroyseed')
-    s.anchor.setTo .5, 0.5
+    s.anchor.setTo .5, .5
     s.angle = _angle dir
     s.animations.add 'play'
     s.animations.play 'play', 10, true
@@ -180,10 +188,6 @@ Game.prototype =
           unless @tilemap.getTile x + dx, y + dy
             gs = @growseeds.add @mk_growseed x, y, dir
             gs.alpha = 0
-            gs.scale = {x: 3, y:3}
-            tween = @add.tween gs.scale
-            tween.to {x: 1, y: 1}, 500
-            tween.start()
             tween = @add.tween gs
             tween.to {alpha: 1}, 500
             tween.start()
@@ -204,10 +208,6 @@ Game.prototype =
           unless @tilemap.getTile x + dx, y + dy
             gs = @destroyseeds.add @mk_destroyseed x, y, dir
             gs.alpha = 0
-            gs.scale = {x: 3, y:3}
-            tween = @add.tween gs.scale
-            tween.to {x: 1, y: 1}, 500
-            tween.start()
             tween = @add.tween gs
             tween.to {alpha: 1}, 500
             tween.start()
@@ -220,6 +220,14 @@ Game.prototype =
 
   upd_surf: ->
     tiles = [[@s.player.x, @s.player.y]]
+    negtiles = [[0, 0]]
+
+    _in = (ts, x, y) ->
+      for t in ts
+        if t[0] == x and t[1] == y
+          return yes
+      no
+
     at = 0
     while 1
       if at > 100 
@@ -239,44 +247,60 @@ Game.prototype =
             tiles.push [t[0] + dx, t[1] + dy]
       at += 1
 
-
+    __ 'tiles'
+    __ tiles
     @surf.removeAll()
-    negtiles = [[0, 0]]
+
+    '''
     outerborder = []
-    at = 0
+    at = -1
     while 1
+      at += 1
       if at > 1000 
-        console.log 'ntl', negtiles.length
+        __ 'ntl', negtiles.length
         return []
       if at >= negtiles.length then break
       t = negtiles[at]
 
-      foundtile = no
       for dir in DIRS
         [dx, dy] = _dxdy dir
-        if (0 <= t[0] + dx and t[0] + dx < MAP_WIDTH) and (0 <= t[1] + dy and t[1] + dy < MAP_HEIGHT) and not @tilemap.getTile t[0] + dx, t[1] + dy
-          found = no
-          for tt in negtiles
-            if t[0] + dx == tt[0] and t[1] + dy == tt[1]
-              found = yes
-              break
-          if not found
-            negtiles.push [t[0] + dx, t[1] + dy]
-        if @tilemap.getTile t[0] + dx, t[1] + dy
-          s = @surf.add new Phaser.Sprite(@game, (t[0] + 0.5) * TILE_SIZE, (t[1] + 0.5) * TILE_SIZE, 'surface')
-          s.anchor.setTo 0.5, 0.5
-          s.angle = _angle dir
-      if foundtile
-        outerborder.push [t[0], t[1]]
-      at += 1
+        #__ 'dir', dir
+        if _in tiles, t[0]+dx, t[1]+dx
+          #__ 'intiles'
+          outerborder.push [t[0], t[1], dir]
 
-    console.log outerborder
+        else
+          console.log 'nointiles'
+          if (t[0] + dx >= 0) and (t[1] + dy >= 0) and (t[0] + dx < MAP_WIDTH) and (t[1] + dy < MAP_WIDTH)
+            #__ 'inmap'
+            if not _in negtiles, t[0] + dx, t[1] + dy
+
+              negtiles.push [t[0] + dx, t[1] + dy]
+    '''
+
+    #__ 'negtiles'
+    #__ negtiles
+    #__ 'outerborder'
+    #__ outerborder
+
+    outerborder = []
+    for t in tiles
+      for dir in DIRS
+        [dx, dy] = _dxdy dir
+        if not @tilemap.getTile t[0] + dx, t[1] + dy
+          b = [t[0] + dx, t[1] + dy, _reverse dir]
+          outerborder.push(b)
+          s = @surf.add new Phaser.Sprite(@game, (b[0] + 0.5) * TILE_SIZE, (b[1] + 0.5) * TILE_SIZE, 'surface')
+          s.anchor.setTo 0.5, 0.5
+          s.angle = _angle b[2]
+    
 
     #outerborder
 
 
 
   update: ->
+
     if not @s.over
       found = no
       if not @.moving and not @s.putdown
@@ -328,13 +352,10 @@ Game.prototype =
             @s.putdown = yes
             
             ss = @world.add @mk_destroyseed t.x, t.y, _angle_to_dir s.angle
-            tween = @add.tween ss.scale
-            tween.to {x:0.5, y:0.5}, 1000
-            tween.onComplete.add => @world.remove ss
-            tween.start()
             tween = @add.tween ss
             [dx, dy] = _dxdy _angle_to_dir s.angle
-            tween.to {alpha:0, x: ss.x + 2 * dx * TILE_SIZE, y: ss.y + 2 * dy * TILE_SIZE}, 1000
+            tween.to {alpha:0, x: ss.x + 2 * dx * TILE_SIZE, y: ss.y + 2 * dy * TILE_SIZE}, 500
+            tween.onComplete.add => @world.remove ss
             tween.start()
 
             @destroyseeds.remove s
@@ -346,12 +367,9 @@ Game.prototype =
           if not @tilemap.getTile @s.player.x + dx, @s.player.y + dy
             @putTile @s.player.x+dx, @s.player.y+dy
             ss = @world.add @mk_growseed @s.player.x, @s.player.y, dir
-            tween = @add.tween ss.scale
-            tween.to {x:0.5, y:0.5}, 1000
-            tween.onComplete.add => @world.remove ss
-            tween.start()
             tween = @add.tween ss
-            tween.to {alpha:0, x: ss.x + 2 * dx * TILE_SIZE, y: ss.y + 2 * dy * TILE_SIZE}, 1000
+            tween.to {alpha:0, x: ss.x + 2 * dx * TILE_SIZE, y: ss.y + 2 * dy * TILE_SIZE}, 500
+            tween.onComplete.add => @world.remove ss
             tween.start()
             @s.inv.pop()
             @upd_inv()

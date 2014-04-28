@@ -27,6 +27,8 @@ Preloader.prototype =
     #this.load.atlas('playButton', 'assets/img/play_button.png', 'assets/img/play_button.json');
     @load.image('border', 'assets/img/border.png');
     @load.image('cloud', 'assets/img/cloud.png');
+    @load.image('cloud2', 'assets/img/cloud2.png');
+    @load.image('cloud3', 'assets/img/cloud3.png');
     @load.image('backpixel', 'assets/img/backpixel.png');
     @load.image('tileset', 'assets/img/tileset.png');
     @load.image('player', 'assets/img/player.png');

@@ -17,6 +17,8 @@
     preload: function() {
       this.load.image('border', 'assets/img/border.png');
       this.load.image('cloud', 'assets/img/cloud.png');
+      this.load.image('cloud2', 'assets/img/cloud2.png');
+      this.load.image('cloud3', 'assets/img/cloud3.png');
       this.load.image('backpixel', 'assets/img/backpixel.png');
       this.load.image('tileset', 'assets/img/tileset.png');
       this.load.image('player', 'assets/img/player.png');
