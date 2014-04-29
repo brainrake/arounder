@@ -546,7 +546,7 @@
           d = _pyt(x, y, cx, cy);
           if (d > 5.2) {
             angle = Math.atan2(x - cx, y - cy);
-            s = this.surf.add(new Phaser.Sprite(this.game, (cx + .5) * TILE_SIZE, (cy + .5) * TILE_SIZE, 'surface'));
+            s = this.surf.add(new Phaser.Sprite(this.game, (cx + 1) * TILE_SIZE, (cy + .5) * TILE_SIZE, 'surface'));
             s.anchor.setTo(0.5, 7.5);
             s.angle = 180 - angle * 180 / 3.1415;
           }

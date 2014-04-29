@@ -349,7 +349,7 @@ Game.prototype =
         if d > 5.2
           angle = Math.atan2 x-cx, y-cy
           #__ angle
-          s = @surf.add new Phaser.Sprite(@game, (cx + .5) * TILE_SIZE, (cy + .5) * TILE_SIZE, 'surface')
+          s = @surf.add new Phaser.Sprite(@game, (cx + 1) * TILE_SIZE, (cy + .5) * TILE_SIZE, 'surface')
           s.anchor.setTo 0.5, 7.5
           s.angle = 180 - angle * 180 / 3.1415
         if d > 6.7
