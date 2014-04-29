@@ -70,11 +70,12 @@ Game.prototype =
       over:no
       putdown: no
       inv: []
-      max_inv: 3
+      max_inv: 7
 
     @in = 
       cursors: @input.keyboard.createCursorKeys()
       space: @input.keyboard.addKey '32'
+      esc: @input.keyboard.addKey '27'
     
     rot = (res, angle, period) =>
       img = @add.image 450, 285, res
@@ -86,36 +87,48 @@ Game.prototype =
       tween.to (angle: angle), period
       tween.onComplete.add => img.angle = 0; tween.start()
       tween.start()
+      img
 
 
-    rot 'cloud',360, 99999
-    rot 'cloud3',-360, 119999
+    rot 'cloud',360, 87999
+    rot 'cloud3',-360, 129999
+
     #@bg = @add.image 0, 0, 'border'
     #@bg.fixedToCamera = yes
 
-    @a_destroy = this.add.audio 'a_destroy', 0.3
-    @a_growseed = this.add.audio 'a_growseed', 2
-    @a_push = this.add.audio 'a_push', 2
+    @a_destroy = this.add.audio 'a_destroy', .5
+    @a_growseed = this.add.audio 'a_growseed', 1.5
+    @a_push = this.add.audio 'a_push', 1.5
 
     @tilemap = @add.tilemap null, TILE_SIZE, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT
     @baselayer = @tilemap.createBlankLayer 'layer1', MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, TILE_SIZE
     @baselayer.fixedToCamera =  no
-    @tilemap.addTilesetImage('tileset');
+    @tilemap.addTilesetImage('tileseti');
     @surf = @add.group()
     @st = @add.group()
 
     for [x, y] in F_PENTOMINO
       @putTile MAP_CENTER_X + x, MAP_CENTER_Y + y 
 
+    @growseedanims = @add.group()
     @growseeds = @add.group()
-    @growseed_timer = @game.time.create no
-    @growseed_timer.loop 2500, => @expand()
-    @growseed_timer.start()
+    t1 = =>
+      growseed_timer = @game.time.create()
+      growseed_timer.add (@rnd.integerInRange 1800, 2700), => 
+        if not @s.over
+          @expand(); t1()
+      growseed_timer.start()
+    t1()
 
+    @destroyseedanims = @add.group()
     @destroyseeds = @add.group()
-    @destroyseed_timer = @game.time.create no
-    @destroyseed_timer.loop 3200, => @contract()
-    @destroyseed_timer.start()
+    t2 = =>
+      growseed_timer = @game.time.create()
+      growseed_timer.add (@rnd.integerInRange 2100, 3600), => 
+        if not @s.over
+          @contract(); t2()
+      growseed_timer.start()
+    t2()
 
     {x, y} = @s.player
     @player = @add.image (x + .5) * TILE_SIZE, (y + .5) * TILE_SIZE, 'player'
@@ -124,7 +137,8 @@ Game.prototype =
     @inv = @add.group()
 
     @circ = @add.group()
-    rot 'cloud2', 360, 149999
+    
+    rot 'cloud2', 360, 154999
 
     @upd_surf()
 
@@ -148,7 +162,7 @@ Game.prototype =
     s.anchor.setTo .5, .5
     s.angle = _angle dir
     s.animations.add 'play'
-    s.animations.play 'play', 10, true
+    s.animations.play 'play', 5, true
     s
 
   putTile: (x, y) ->
@@ -207,18 +221,31 @@ Game.prototype =
             tween.start()
             tween = @add.tween gs
             tween.to {alpha: 1}, 500
+            tween.onComplete.add =>
+              if not @s.over and @growseeds.getIndex gs > -1
+                gs.gsa = gsa = @growseedanims.add new Phaser.Sprite @game, (x + .5) * TILE_SIZE, (y + .5) * TILE_SIZE, 'tilesetgrow'
+                gsa.frame = 0
+                gsa.alpha = 0
+                gsa.angle = _angle _reverse dir
+                gsa.anchor.setTo 0.5, -0.5
+                tween2 = @add.tween gsa
+                tween2.to {alpha: 1}, 2500#, Phaser.Easing.Sinusoidal.In
+                tween2.onComplete.add =>
+                  if not @s.over and (@growseedanims.getIndex gsa) > -1
+                    @growseedanims.remove gsa
+                  if not @s.over and (@growseeds.getIndex gs) > -1
+                    @growseeds.remove gs
+                    @putTile x+dx, y+dy
+                    @a_push.play()
+                tween2.start()
             tween.start()
-            setTimeout (=> 
-              if (@growseeds.getIndex gs) > -1
-                @growseeds.remove gs; @putTile x+dx, y+dy
-            ), 3000
             break
         break
 
   contract: ->
     for i in [1..1000]
       [x, y] = [(@rnd.integerInRange BORDER_LEFT, BORDER_RIGHT), (@rnd.integerInRange BORDER_TOP, BORDER_BOTTOM)]
-      if (@tilemap.getTile x, y) and (@tilemap.getTile x, y).index != 16
+      if (thetile = @tilemap.getTile x, y) and thetile.index != 16
         while 1
           dir = DIRS[@rnd.integerInRange 0, 3]
           [dx, dy] = _dxdy dir
@@ -231,12 +258,24 @@ Game.prototype =
             tween.start()
             tween = @add.tween gs
             tween.to {alpha: 1}, 500
+            timer = @game.time.create()
+            tween.onComplete.add =>
+              if not @s.over and @destroyseeds.getIndex gs > -1
+                gs.gsa = gsa = @destroyseedanims.add new Phaser.Sprite @game, (x + .5) * TILE_SIZE, (y + .5) * TILE_SIZE, 'tilesetdestroy'
+                gsa.frame = 17
+                gsa.alpha = 0
+                gsa.angle = 0  
+                gsa.anchor.setTo 0.5, 0.5
+                tween2 = @add.tween gsa
+                tween2.to {alpha: 1}, 2500#, Phaser.Easing.Sinusoidal.In
+                tween2.onComplete.add =>
+                  if not @s.over and (@destroyseedanims.getIndex gsa) > -1
+                    @destroyseedanims.remove gsa
+                  if not @s.over and (@destroyseeds.getIndex gs) > -1
+                    @destroyseeds.remove gs; @clearTile x, y
+                    @a_destroy.play()
+                tween2.start()
             tween.start()
-            setTimeout (=> 
-              if (@destroyseeds.getIndex gs) > -1
-                @destroyseeds.remove gs; @clearTile x, y
-                @a_destroy.play()
-            ), 3000
             break
         break
 
@@ -271,7 +310,6 @@ Game.prototype =
     #__ 'tiles'
     #__ tiles
     @surf.removeAll()
-
     outerborder = []
     for t in tiles
       for dir in DIRS
@@ -283,15 +321,17 @@ Game.prototype =
           s.anchor.setTo 0.5, 0.5
           s.angle = _angle b[2]
 
-    @st.removeAll()
-    ls = '' + outerborder.length
-    if ls.length == 1
-      ls = '00'+ls
-    if ls.length == 2
-      ls = '0'+ls
-    for lc, n in ls
-      s = @st.add new Phaser.Sprite(@game, (2 * n + 24) * TILE_SIZE, 2 * TILE_SIZE, 'numbers')
-      s.frame = lc*1
+    if not @s.over
+
+      @st.removeAll()
+      ls = '' + outerborder.length
+      if ls.length == 1
+        ls = '00'+ls
+      if ls.length == 2
+        ls = '0'+ls
+      for lc, n in ls
+        s = @st.add new Phaser.Sprite(@game, (2 * n + 24) * TILE_SIZE, 2 * TILE_SIZE, 'numbers')
+        s.frame = lc*1
 
     over = no
     if @circ
@@ -312,7 +352,7 @@ Game.prototype =
           s = @surf.add new Phaser.Sprite(@game, (cx + .5) * TILE_SIZE, (cy + .5) * TILE_SIZE, 'surface')
           s.anchor.setTo 0.5, 7.5
           s.angle = 180 - angle * 180 / 3.1415
-        if d > 6.5
+        if d > 6.7
           over = yes
     
     if over
@@ -330,10 +370,10 @@ Game.prototype =
       if not @.moving and not @s.putdown
         @growseeds.forEach (s) => if s
           t = @tilemap.getTileWorldXY s.x, s.y
-          if t and t == @tilemap.getTile @s.player.x, @s.player.y
+          if t and (t == @tilemap.getTile @s.player.x, @s.player.y) and s.alpha == 1
             found = yes
             # pickup growseed
-            if @s.inv.length <= @s.max_inv
+            if @s.inv.length < @s.max_inv
               @s.putdown = yes
               @s.inv.push 1
               @upd_inv()
@@ -345,6 +385,8 @@ Game.prototype =
               tween.onComplete.add => @world.remove ss
               tween.start()
               
+              @a_growseed.play()
+              if s.gsa then @growseedanims.remove s.gsa
               @growseeds.remove s
 
             else # kill growseed
@@ -361,6 +403,8 @@ Game.prototype =
               tween.to {alpha:0, x: ss.x + 2 * dx * TILE_SIZE, y: ss.y + 2 * dy * TILE_SIZE}, 300
               tween.start()
               
+              @a_push.play()
+              if s.gsa then @growseedanims.remove s.gsa
               @growseeds.remove s
 
       
@@ -368,7 +412,7 @@ Game.prototype =
         # kill destroyseed
         @destroyseeds.forEach (s) => if s
           t = @tilemap.getTileWorldXY s.x, s.y
-          if t and t == @tilemap.getTile @s.player.x, @s.player.y
+          if t and (t == @tilemap.getTile @s.player.x, @s.player.y) and s.alpha == 1
             found = yes
             @s.putdown = yes
             
@@ -379,6 +423,7 @@ Game.prototype =
             tween.onComplete.add => @world.remove ss
             tween.start()
 
+            if s.gsa then @destroyseedanims.remove s.gsa
             @destroyseeds.remove s
             @a_push.play()
 
@@ -396,10 +441,8 @@ Game.prototype =
             tween.start()
             @s.inv.pop()
             @upd_inv()
-            @a_growseed.play()
+            @a_push.play()
 
-      if not @in.space.isDown and @s.putdown
-        @s.putdown = no
 
       #move
       for dir in DIRS
@@ -413,28 +456,37 @@ Game.prototype =
       #gameover
       if not @tilemap.getTile @s.player.x, @s.player.y
         @gover()
-
+    if not @in.space.isDown and @s.putdown
+      @s.putdown = no
+    if @in.esc.isDown
+      @quitGame()
+    if @s.over and @in.space.isDown and not @s.putdown
+      @restartGame()
 
   gover: ->
     if @s.over then return
     @s.over = yes
 
+    end = @add.image 24 * TILE_SIZE, 16 * TILE_SIZE, 'end'
     player = @add.image @player.x, @player.y, 'player'
     player.anchor.setTo .5, .5
     player.angle = @player.angle
     tween = @add.tween player
-    tween.to {alpha: 0}, 500
+    tween.to {alpha: 0}, 1500
     tween.start()
     tween = @add.tween player.scale
-    tween.to {x:0.2, y:0.2}, 500
+    tween.to {x:0.2, y:0.2}, 1500
     tween.start()
-    @world.remove @player
-    setTimeout (=>@quitGame()), 4000
+    @player.alpha = 0
+    #setTimeout (=>@restartGame()), 4000
         
 
-  quitGame: (pointer) ->
+  restartGame: (pointer) ->
     #//  Here you should destroy anything you no longer need.
     #//  Stop music, delete sprites, purge caches, free resources, all that good stuff.
 
     #//  Then let's go back to the main menu.
+    @game.state.start('Game');
+
+  quitGame: ->
     @game.state.start('MainMenu');

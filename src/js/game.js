@@ -107,7 +107,7 @@
 
   Game.prototype = {
     create: function() {
-      var rot, x, y, _i, _len, _ref, _ref1;
+      var rot, t1, t2, x, y, _i, _len, _ref, _ref1;
       this.s = {
         moving: false,
         player: {
@@ -122,11 +122,12 @@
         over: false,
         putdown: false,
         inv: [],
-        max_inv: 3
+        max_inv: 7
       };
       this["in"] = {
         cursors: this.input.keyboard.createCursorKeys(),
-        space: this.input.keyboard.addKey('32')
+        space: this.input.keyboard.addKey('32'),
+        esc: this.input.keyboard.addKey('27')
       };
       rot = (function(_this) {
         return function(res, angle, period) {
@@ -147,46 +148,63 @@
             img.angle = 0;
             return tween.start();
           });
-          return tween.start();
+          tween.start();
+          return img;
         };
       })(this);
-      rot('cloud', 360, 99999);
-      rot('cloud3', -360, 119999);
-      this.a_destroy = this.add.audio('a_destroy', 0.3);
-      this.a_growseed = this.add.audio('a_growseed', 2);
-      this.a_push = this.add.audio('a_push', 2);
+      rot('cloud', 360, 87999);
+      rot('cloud3', -360, 129999);
+      this.a_destroy = this.add.audio('a_destroy', .5);
+      this.a_growseed = this.add.audio('a_growseed', 1.5);
+      this.a_push = this.add.audio('a_push', 1.5);
       this.tilemap = this.add.tilemap(null, TILE_SIZE, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT);
       this.baselayer = this.tilemap.createBlankLayer('layer1', MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, TILE_SIZE);
       this.baselayer.fixedToCamera = false;
-      this.tilemap.addTilesetImage('tileset');
+      this.tilemap.addTilesetImage('tileseti');
       this.surf = this.add.group();
       this.st = this.add.group();
       for (_i = 0, _len = F_PENTOMINO.length; _i < _len; _i++) {
         _ref = F_PENTOMINO[_i], x = _ref[0], y = _ref[1];
         this.putTile(MAP_CENTER_X + x, MAP_CENTER_Y + y);
       }
+      this.growseedanims = this.add.group();
       this.growseeds = this.add.group();
-      this.growseed_timer = this.game.time.create(false);
-      this.growseed_timer.loop(2500, (function(_this) {
+      t1 = (function(_this) {
         return function() {
-          return _this.expand();
+          var growseed_timer;
+          growseed_timer = _this.game.time.create();
+          growseed_timer.add(_this.rnd.integerInRange(1800, 2700), function() {
+            if (!_this.s.over) {
+              _this.expand();
+              return t1();
+            }
+          });
+          return growseed_timer.start();
         };
-      })(this));
-      this.growseed_timer.start();
+      })(this);
+      t1();
+      this.destroyseedanims = this.add.group();
       this.destroyseeds = this.add.group();
-      this.destroyseed_timer = this.game.time.create(false);
-      this.destroyseed_timer.loop(3200, (function(_this) {
+      t2 = (function(_this) {
         return function() {
-          return _this.contract();
+          var growseed_timer;
+          growseed_timer = _this.game.time.create();
+          growseed_timer.add(_this.rnd.integerInRange(2100, 3600), function() {
+            if (!_this.s.over) {
+              _this.contract();
+              return t2();
+            }
+          });
+          return growseed_timer.start();
         };
-      })(this));
-      this.destroyseed_timer.start();
+      })(this);
+      t2();
       _ref1 = this.s.player, x = _ref1.x, y = _ref1.y;
       this.player = this.add.image((x + .5) * TILE_SIZE, (y + .5) * TILE_SIZE, 'player');
       this.player.anchor.setTo(.5, .5);
       this.inv = this.add.group();
       this.circ = this.add.group();
-      rot('cloud2', 360, 149999);
+      rot('cloud2', 360, 154999);
       return this.upd_surf();
     },
     upd_inv: function() {
@@ -220,7 +238,7 @@
       s.anchor.setTo(.5, .5);
       s.angle = _angle(dir);
       s.animations.add('play');
-      s.animations.play('play', 10, true);
+      s.animations.play('play', 5, true);
       return s;
     },
     putTile: function(x, y) {
@@ -306,15 +324,34 @@
               tween.to({
                 alpha: 1
               }, 500);
-              tween.start();
-              setTimeout(((function(_this) {
+              tween.onComplete.add((function(_this) {
                 return function() {
-                  if ((_this.growseeds.getIndex(gs)) > -1) {
-                    _this.growseeds.remove(gs);
-                    return _this.putTile(x + dx, y + dy);
+                  var gsa, tween2;
+                  if (!_this.s.over && _this.growseeds.getIndex(gs > -1)) {
+                    gs.gsa = gsa = _this.growseedanims.add(new Phaser.Sprite(_this.game, (x + .5) * TILE_SIZE, (y + .5) * TILE_SIZE, 'tilesetgrow'));
+                    gsa.frame = 0;
+                    gsa.alpha = 0;
+                    gsa.angle = _angle(_reverse(dir));
+                    gsa.anchor.setTo(0.5, -0.5);
+                    tween2 = _this.add.tween(gsa);
+                    tween2.to({
+                      alpha: 1
+                    }, 2500);
+                    tween2.onComplete.add(function() {
+                      if (!_this.s.over && (_this.growseedanims.getIndex(gsa)) > -1) {
+                        _this.growseedanims.remove(gsa);
+                      }
+                      if (!_this.s.over && (_this.growseeds.getIndex(gs)) > -1) {
+                        _this.growseeds.remove(gs);
+                        _this.putTile(x + dx, y + dy);
+                        return _this.a_push.play();
+                      }
+                    });
+                    return tween2.start();
                   }
                 };
-              })(this)), 3000);
+              })(this));
+              tween.start();
               break;
             }
           }
@@ -326,11 +363,11 @@
       return _results;
     },
     contract: function() {
-      var dir, dx, dy, gs, i, tween, x, y, _i, _ref, _ref1, _results;
+      var dir, dx, dy, gs, i, thetile, timer, tween, x, y, _i, _ref, _ref1, _results;
       _results = [];
       for (i = _i = 1; _i <= 1000; i = ++_i) {
         _ref = [this.rnd.integerInRange(BORDER_LEFT, BORDER_RIGHT), this.rnd.integerInRange(BORDER_TOP, BORDER_BOTTOM)], x = _ref[0], y = _ref[1];
-        if ((this.tilemap.getTile(x, y)) && (this.tilemap.getTile(x, y)).index !== 16) {
+        if ((thetile = this.tilemap.getTile(x, y)) && thetile.index !== 16) {
           while (1) {
             dir = DIRS[this.rnd.integerInRange(0, 3)];
             _ref1 = _dxdy(dir), dx = _ref1[0], dy = _ref1[1];
@@ -348,16 +385,35 @@
               tween.to({
                 alpha: 1
               }, 500);
-              tween.start();
-              setTimeout(((function(_this) {
+              timer = this.game.time.create();
+              tween.onComplete.add((function(_this) {
                 return function() {
-                  if ((_this.destroyseeds.getIndex(gs)) > -1) {
-                    _this.destroyseeds.remove(gs);
-                    _this.clearTile(x, y);
-                    return _this.a_destroy.play();
+                  var gsa, tween2;
+                  if (!_this.s.over && _this.destroyseeds.getIndex(gs > -1)) {
+                    gs.gsa = gsa = _this.destroyseedanims.add(new Phaser.Sprite(_this.game, (x + .5) * TILE_SIZE, (y + .5) * TILE_SIZE, 'tilesetdestroy'));
+                    gsa.frame = 17;
+                    gsa.alpha = 0;
+                    gsa.angle = 0;
+                    gsa.anchor.setTo(0.5, 0.5);
+                    tween2 = _this.add.tween(gsa);
+                    tween2.to({
+                      alpha: 1
+                    }, 2500);
+                    tween2.onComplete.add(function() {
+                      if (!_this.s.over && (_this.destroyseedanims.getIndex(gsa)) > -1) {
+                        _this.destroyseedanims.remove(gsa);
+                      }
+                      if (!_this.s.over && (_this.destroyseeds.getIndex(gs)) > -1) {
+                        _this.destroyseeds.remove(gs);
+                        _this.clearTile(x, y);
+                        return _this.a_destroy.play();
+                      }
+                    });
+                    return tween2.start();
                   }
                 };
-              })(this)), 3000);
+              })(this));
+              tween.start();
               break;
             }
           }
@@ -426,18 +482,20 @@
           }
         }
       }
-      this.st.removeAll();
-      ls = '' + outerborder.length;
-      if (ls.length === 1) {
-        ls = '00' + ls;
-      }
-      if (ls.length === 2) {
-        ls = '0' + ls;
-      }
-      for (n = _m = 0, _len4 = ls.length; _m < _len4; n = ++_m) {
-        lc = ls[n];
-        s = this.st.add(new Phaser.Sprite(this.game, (2 * n + 24) * TILE_SIZE, 2 * TILE_SIZE, 'numbers'));
-        s.frame = lc * 1;
+      if (!this.s.over) {
+        this.st.removeAll();
+        ls = '' + outerborder.length;
+        if (ls.length === 1) {
+          ls = '00' + ls;
+        }
+        if (ls.length === 2) {
+          ls = '0' + ls;
+        }
+        for (n = _m = 0, _len4 = ls.length; _m < _len4; n = ++_m) {
+          lc = ls[n];
+          s = this.st.add(new Phaser.Sprite(this.game, (2 * n + 24) * TILE_SIZE, 2 * TILE_SIZE, 'numbers'));
+          s.frame = lc * 1;
+        }
       }
       over = false;
       if (this.circ) {
@@ -458,7 +516,7 @@
             s.anchor.setTo(0.5, 7.5);
             s.angle = 180 - angle * 180 / 3.1415;
           }
-          if (d > 6.5) {
+          if (d > 6.7) {
             over = true;
           }
         }
@@ -478,9 +536,9 @@
               var dx, dy, ss, t, tween, _ref, _ref1;
               if (s) {
                 t = _this.tilemap.getTileWorldXY(s.x, s.y);
-                if (t && t === _this.tilemap.getTile(_this.s.player.x, _this.s.player.y)) {
+                if (t && (t === _this.tilemap.getTile(_this.s.player.x, _this.s.player.y)) && s.alpha === 1) {
                   found = true;
-                  if (_this.s.inv.length <= _this.s.max_inv) {
+                  if (_this.s.inv.length < _this.s.max_inv) {
                     _this.s.putdown = true;
                     _this.s.inv.push(1);
                     _this.upd_inv();
@@ -497,6 +555,10 @@
                       return _this.world.remove(ss);
                     });
                     tween.start();
+                    _this.a_growseed.play();
+                    if (s.gsa) {
+                      _this.growseedanims.remove(s.gsa);
+                    }
                     return _this.growseeds.remove(s);
                   } else {
                     _this.s.putdown = true;
@@ -519,6 +581,10 @@
                       y: ss.y + 2 * dy * TILE_SIZE
                     }, 300);
                     tween.start();
+                    _this.a_push.play();
+                    if (s.gsa) {
+                      _this.growseedanims.remove(s.gsa);
+                    }
                     return _this.growseeds.remove(s);
                   }
                 }
@@ -532,7 +598,7 @@
               var dx, dy, ss, t, tween, _ref;
               if (s) {
                 t = _this.tilemap.getTileWorldXY(s.x, s.y);
-                if (t && t === _this.tilemap.getTile(_this.s.player.x, _this.s.player.y)) {
+                if (t && (t === _this.tilemap.getTile(_this.s.player.x, _this.s.player.y)) && s.alpha === 1) {
                   found = true;
                   _this.s.putdown = true;
                   ss = _this.world.add(_this.mk_destroyseed(t.x, t.y, _angle_to_dir(s.angle)));
@@ -547,6 +613,9 @@
                     return _this.world.remove(ss);
                   });
                   tween.start();
+                  if (s.gsa) {
+                    _this.destroyseedanims.remove(s.gsa);
+                  }
                   _this.destroyseeds.remove(s);
                   return _this.a_push.play();
                 }
@@ -574,12 +643,9 @@
               tween.start();
               this.s.inv.pop();
               this.upd_inv();
-              this.a_growseed.play();
+              this.a_push.play();
             }
           }
-        }
-        if (!this["in"].space.isDown && this.s.putdown) {
-          this.s.putdown = false;
         }
         for (_i = 0, _len = DIRS.length; _i < _len; _i++) {
           dir = DIRS[_i];
@@ -593,38 +659,46 @@
           }
         }
         if (!this.tilemap.getTile(this.s.player.x, this.s.player.y)) {
-          return this.gover();
+          this.gover();
         }
+      }
+      if (!this["in"].space.isDown && this.s.putdown) {
+        this.s.putdown = false;
+      }
+      if (this["in"].esc.isDown) {
+        this.quitGame();
+      }
+      if (this.s.over && this["in"].space.isDown && !this.s.putdown) {
+        return this.restartGame();
       }
     },
     gover: function() {
-      var player, tween;
+      var end, player, tween;
       if (this.s.over) {
         return;
       }
       this.s.over = true;
+      end = this.add.image(24 * TILE_SIZE, 16 * TILE_SIZE, 'end');
       player = this.add.image(this.player.x, this.player.y, 'player');
       player.anchor.setTo(.5, .5);
       player.angle = this.player.angle;
       tween = this.add.tween(player);
       tween.to({
         alpha: 0
-      }, 500);
+      }, 1500);
       tween.start();
       tween = this.add.tween(player.scale);
       tween.to({
         x: 0.2,
         y: 0.2
-      }, 500);
+      }, 1500);
       tween.start();
-      this.world.remove(this.player);
-      return setTimeout(((function(_this) {
-        return function() {
-          return _this.quitGame();
-        };
-      })(this)), 4000);
+      return this.player.alpha = 0;
     },
-    quitGame: function(pointer) {
+    restartGame: function(pointer) {
+      return this.game.state.start('Game');
+    },
+    quitGame: function() {
       return this.game.state.start('MainMenu');
     }
   };

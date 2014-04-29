@@ -23,6 +23,7 @@ Preloader.prototype =
 
     #//  Here we load the rest of the assets our game needs.
     #//  As this is just a Project Template I've not provided these assets, swap them for your own.
+    @load.image('end', 'assets/img/end.png');
     @load.image('menu1', 'assets/img/menu1.png');
     @load.image('menu2', 'assets/img/menu2.png');
     #load.atlas('playButton', 'assets/img/play_button.png', 'assets/img/play_button.json');
@@ -30,12 +31,13 @@ Preloader.prototype =
     @load.image('cloud', 'assets/img/cloud.png');
     @load.image('cloud2', 'assets/img/cloud2.png');
     @load.image('cloud3', 'assets/img/cloud3.png');
-    @load.image('backpixel', 'assets/img/backpixel.png');
-    @load.image('tileset', 'assets/img/tileset.png');
+    #@load.image('backpixel', 'assets/img/backpixel.png');
+    @load.image('tileseti', 'assets/img/tileset.png');
     @load.image('player', 'assets/img/player.png');
     @load.image('surface', 'assets/img/surface.png');
     @load.image('surfacew', 'assets/img/surfacew.png');
     @load.spritesheet('tilesetgrow', 'assets/img/tilesetgrow.png', 30, 30, 20, 0, 0);
+    @load.spritesheet('tilesetdestroy', 'assets/img/tilesetdestroy.png', 30, 30, 20, 0, 0);
     @load.spritesheet('growseed', 'assets/img/growseed.png', 30, 60, 4, 0, 0)
     @load.spritesheet('destroyseed', 'assets/img/destroyseed.png', 30, 30, 4, 0, 0)
     @load.spritesheet('numbers', 'assets/img/numbers.png', 60, 90, 10, 0, 0)
