@@ -6,7 +6,9 @@
   module.exports = Boot;
 
   Boot.prototype = {
-    preload: function() {},
+    preload: function() {
+      return this.load.image('cloud', 'assets/img/cloud.png');
+    },
     create: function() {
       this.game.input.maxPointers = 1;
       this.game.stage.disableVisibilityChange = true;

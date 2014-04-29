@@ -7,7 +7,9 @@
   module.exports = Boot;
 
   Boot.prototype = {
-    preload: function() {},
+    preload: function() {
+      return this.load.image('cloud', 'assets/img/cloud.png');
+    },
     create: function() {
       this.game.input.maxPointers = 1;
       this.game.stage.disableVisibilityChange = true;
@@ -878,7 +880,33 @@
       this.load.audio('a_push', ['assets/audio/push.mp3']);
       return this.load.bitmapFont('carrier_command', 'assets/fonts/carrier_command.png', 'assets/fonts/carrier_command.xml');
     },
-    create: function() {},
+    create: function() {
+      var rot;
+      rot = (function(_this) {
+        return function(res, angle, period) {
+          var img, tween;
+          img = _this.add.image(450, 285, res);
+          img.fixedToCamera = true;
+          img.anchor.setTo(.5, .5);
+          img.scale = {
+            x: .7,
+            y: .7
+          };
+          img.alpha = 1;
+          tween = _this.add.tween(img);
+          tween.to({
+            angle: angle
+          }, period);
+          tween.onComplete.add(function() {
+            img.angle = 0;
+            return tween.start();
+          });
+          tween.start();
+          return img;
+        };
+      })(this);
+      return rot('cloud', 360, 87999);
+    },
     update: function() {
       if (true) {
         this.ready = true;
@@ -901,17 +929,7 @@
 
   Splash.prototype = {
     create: function() {
-      var logo, tween;
-      this.game.state.start('Preloader');
-      logo = this.logo = this.add.sprite(0, 0, 'menusharp');
-      logo.alpha = 0;
-      tween = this.add.tween(logo);
-      tween.onComplete.add((function() {
-        return this.game.state.start('Preloader');
-      }), this);
-      return tween.to({
-        alpha: 1
-      }, 200, Phaser.Easing.Linear.None).start();
+      return this.game.state.start('Preloader');
     }
   };
 

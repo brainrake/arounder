@@ -53,7 +53,21 @@ Preloader.prototype =
   create: () ->
     #//  Once the load has finished we disable the crop because we're going to sit in the update loop for a short while as the music decodes
     #this.preloadBar.cropEnabled = false;
-  
+    rot = (res, angle, period) =>
+      img = @add.image 450, 285, res
+      img.fixedToCamera = yes
+      img.anchor.setTo .5, .5
+      img.scale = {x: .7, y: .7}
+      img.alpha = 1 #0.8
+      tween = @add.tween img
+      tween.to (angle: angle), period
+      tween.onComplete.add => img.angle = 0; tween.start()
+      tween.start()
+      img
+
+
+    rot 'cloud',360, 87999
+
 
   update: () ->
     #//  You don't actually need to do this, but I find it gives a much smoother game experience.

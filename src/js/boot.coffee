@@ -9,9 +9,12 @@ Boot.prototype =
     #this.load.image('preloaderBackground', 'assets/img/preloader_background.jpg');
     #this.load.image('preloaderBar', 'assets/img/preloader_bar.png');
     #this.load.image('menusharp', 'assets/img/menusharp.png');
+    @load.image('cloud', 'assets/img/cloud.png');
   
 
   create: ()  -> 
+
+
     # Unless you specifically know your game needs to support multi-touch I would recommend setting this to 1
     this.game.input.maxPointers = 1;
 

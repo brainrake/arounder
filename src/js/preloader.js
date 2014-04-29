@@ -37,7 +37,33 @@
       this.load.audio('a_push', ['assets/audio/push.mp3']);
       return this.load.bitmapFont('carrier_command', 'assets/fonts/carrier_command.png', 'assets/fonts/carrier_command.xml');
     },
-    create: function() {},
+    create: function() {
+      var rot;
+      rot = (function(_this) {
+        return function(res, angle, period) {
+          var img, tween;
+          img = _this.add.image(450, 285, res);
+          img.fixedToCamera = true;
+          img.anchor.setTo(.5, .5);
+          img.scale = {
+            x: .7,
+            y: .7
+          };
+          img.alpha = 1;
+          tween = _this.add.tween(img);
+          tween.to({
+            angle: angle
+          }, period);
+          tween.onComplete.add(function() {
+            img.angle = 0;
+            return tween.start();
+          });
+          tween.start();
+          return img;
+        };
+      })(this);
+      return rot('cloud', 360, 87999);
+    },
     update: function() {
       if (true) {
         this.ready = true;
